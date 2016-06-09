@@ -1,0 +1,1393 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.11/d3.min.js"></script>
+<script src="Colors.js"></script>
+
+<dom-module id="clap-linkedlist">
+
+  <template>
+    <style>
+
+    </style>
+
+    <div id="linkedlist"></div>
+    <div>
+      <label>
+        Enable Zoom Feature <input type="checkbox" id="linkedListZoomToggle">
+      </label>
+    </div>
+    <div>
+      <form role="form" data-toggle="validator">
+        <div class="row">
+          <div class="col-xs-8 col-sm-6 col-md-6 col-lg-4">
+            <div class="input-group form-group">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-success btn-sm" id="addFirst" type="button">Add first element</button>
+                                </span>
+              <input type="text" pattern="^[0-9]{1,}$" maxlength="3" class="form-control input-sm" id="addFirstData" placeholder="input value" required>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div>
+      <form role="form" data-toggle="validator">
+        <div class="row">
+          <div class="col-xs-8 col-sm-6 col-md-6 col-lg-4">
+            <div class="input-group form-group">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-success btn-sm" id="addLast" type="button">Add last element</button>
+                                </span>
+              <input type="text" pattern="^[0-9]{1,}$" maxlength="3" class="form-control input-sm" id="addLastData" placeholder="input value" required>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div>
+      <form role="form" data-toggle="validator">
+        <div class="row">
+          <div class="col-xs-8 col-sm-6 col-md-6 col-lg-4">
+            <div class="input-group form-group">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-success btn-sm" id="searchIndex" type="button">Search by Index</button>
+                                </span>
+              <input type="text" pattern="^[0-9]{1,}$" maxlength="3" class="form-control input-sm" id="searchIndexData" placeholder="input index" required>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div>
+      <form role="form" data-toggle="validator">
+        <div class="row">
+          <div class="col-xs-8 col-sm-6 col-md-6 col-lg-4">
+            <div class="input-group form-group">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-success btn-sm" id="searchValue" type="button">Search by Value</button>
+                                </span>
+              <input type="text" pattern="^[0-9]{1,}$" maxlength="3" class="form-control input-sm" id="searchValueData" placeholder="input value" required>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div>
+      <form role="form" data-toggle="validator">
+        <div class="row">
+          <div class="col-xs-8 col-sm-6 col-md-6 col-lg-4">
+            <div class="input-group form-group">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-success btn-sm" id="removeFirst" type="button">Remove first element</button>
+                                </span>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div>
+      <form role="form" data-toggle="validator">
+        <div class="row">
+          <div class="col-xs-8 col-sm-6 col-md-6 col-lg-4">
+            <div class="input-group form-group">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-success btn-sm" id="removeLast" type="button">Remove last element</button>
+                                </span>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div>
+      <form role="form" data-toggle="validator">
+        <div class="row">
+          <div class="col-xs-8 col-sm-6 col-md-6 col-lg-4">
+            <div class="input-group form-group">
+              <div class="form-group">
+                <div class="col-xs-offset-1 col-sm-offset-1 col-sm-10">
+                  <button type="button" id="regenerateLinkedList" class="btn btn-primary">Regenerate</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </template>
+
+  <script>
+    var linkedListDefaultData = [1, 5, 8, 5, 7, 13];
+    var linkedListData = [];
+    linkedListDefaultData.forEach(function (val) {
+      linkedListData.push(val);
+    });
+    var linkedListSVG;
+    var svgOptions = {
+      width: 1024,
+      height: 200,
+      initialArrayLength: linkedListData.length,
+      minElements: 5,
+      initialBounds: {
+        lowerBound: 1,
+        upperBound: 100
+      }
+    };
+    var linkedListRectPrevGroup;
+    var linkedListRectNextGroup;
+    var linkedListRectGroup;
+    var linkedListRectIndexAxesGroup;
+    var linkedListRectPrevOptions = {
+      width: 35,
+      height: 50,
+      positionX: 180,
+      positionY: 135,
+      groupTextPositionX: 180,
+      groupTextPositionY: 165,
+      arrowLineSourceX: 18,
+      arrowLineSourceY: 184,
+      arrowLineTargetX: -120,
+      arrowLineTargetY: 184,
+      fontSize: 8,
+      intervalX: 0,
+      textIntervalX: 15,
+      numbersArray: linkedListData
+    };
+    var linkedListRectOptions = {
+      side: 50,
+      positionX: 180,
+      positionY: 135, //135
+      groupTextPositionX: 180,
+      groupTextPositionY: 165,
+      groupIndexTextPositionY: 105,
+      movingToPositionY: 107,
+      scaleFactor: 10,
+      zoomDuration: 500,
+      intervalX: 30,
+      textIntervalX: 55,
+      numbersArray: linkedListData
+    };
+    var linkedListRectNextOptions = {
+      width: 35,
+      height: 50,
+      positionX: 180,
+      positionY: 135,
+      groupTextPositionX: 180,
+      groupTextPositionY: 165,
+      arrowLineSourceX: 92,
+      arrowLineSourceY: 134,
+      arrowLineTargetX: 220,
+      arrowLineTargetY: 134,
+      fontSize: 8,
+      intervalX: 75,
+      textIntervalX: 94,
+      numbersArray: linkedListData
+    };
+    var linkedListRectIndexAxesGroupOption = {
+      textIntervalX: 55,
+      groupTextPositionX: 180,
+      groupIndexTextPositionY: 230,
+      movingToPositionY: 255,
+      numbersArray: linkedListData
+    };
+    var circleOptions = {
+      positionX: linkedListRectOptions.positionX,
+      positionY: linkedListRectOptions.positionY - 10,
+      radius: 20,
+      intervalX: 50,
+      initInterval: 500,
+      initDuration: 500,
+      textIntervalX: 50,
+      textPositionX: 60,
+      circleShowAllEnabled: false
+    };
+    var movingSpeed = {
+      searchIndex: 250,
+      searchValue: 250,
+      initInterval: 500,
+      initDuration: 500,
+      elementsGroup: 1500,
+      removeElementsGroup: 500,
+      zoomDuration: 1000
+    };
+    var colors = new Colors();
+    var steps = new Steps();
+    var searchElementOptions = new SearchElementOptions();
+    var elementsHandler = new ElementsHandler();
+    var moveElement = new MoveElement();
+    var addLinkedList = function () {
+      buildRectsPrevGroup();
+      buildRectsNextGroup();
+      buildRectsGroup();
+      buildArrows();
+      buildIndexAxes();
+    };
+    var buildRectsPrevGroup = function () {
+      if(linkedListRectPrevGroup) {linkedListRectPrevGroup.remove()};
+
+      linkedListRectPrevGroup = linkedListSVG.selectAll("g.rectNode")
+              .data(linkedListData)
+              .enter()
+              .append("g")
+              .attr("class", function (d, i) {
+                return "linkedListRectPrevNode" + i;
+              })
+              .on("mouseover", function (d, i) {
+//                showCircle(i);
+              })
+              .on("mouseout", function (d, i) {
+//                hideCircle(i);
+              });
+
+      linkedListRectPrevGroup
+              .append("rect")
+              .attr("width", linkedListRectPrevOptions.width)
+              .attr("height", linkedListRectPrevOptions.height)
+              .attr("x", function (d, i) {
+                // console.log(d, i);
+                return (i * linkedListRectPrevOptions.positionX) + linkedListRectPrevOptions.intervalX;
+              })
+              .attr("y", linkedListRectPrevOptions.positionY)
+              .attr("rx", 6)
+              .attr("ry", 6)
+              .attr("class", function (d, i) {
+                return "rectPrev rectPrev" + i + " linkedListGroup";
+              })
+              .attr("linkID", "prev")
+              .attr("rectPrevIndex", function (d, i) {
+                return linkedListRectOptions.numbersArray[i - 1];
+              })
+              .attr("colorIndex", function (d, i) {
+                return linkedListRectOptions.numbersArray[i - 1];
+              })
+              .style("stroke", "black")
+              .style("stroke-width", 0.5)
+              .attr("fill", function (d, i) {
+                var colorIndex = d3.select(this).attr("rectPrevIndex");
+
+                return colors.getColor(colorIndex);
+              });
+
+      linkedListRectPrevGroup.append("text")
+              .text(function (d, i) {
+                return "PREV";
+              })
+              .attr("class", function (d, i) {
+                return "rectPrevText" + i + " linkedListGroup";
+              })
+              .attr("text-anchor", "middle")
+              .attr("x", function (d, i) {
+                return (i * linkedListRectPrevOptions.groupTextPositionX) + linkedListRectPrevOptions.textIntervalX;
+              })
+              .attr("y", linkedListRectPrevOptions.groupTextPositionY - 15)
+              .attr("font-family", "sans-serif")
+              .attr("font-size", linkedListRectPrevOptions.fontSize)
+              .attr("colorIndex", "white")
+              .attr("fill", "white");
+
+      linkedListRectPrevGroup.append("text")
+              .text(function (d, i) {
+                var nextData = linkedListRectNextOptions.numbersArray[i - 1];
+                if (i === 0) {
+                  nextData = "null";
+                }
+                return nextData;
+              })
+              .attr("class", function (d, i) {
+                return "rectPrevText" + i + " linkedListGroup";
+              })
+              .attr("text-anchor", "middle")
+              .attr("x", function (d, i) {
+                return (i * linkedListRectPrevOptions.groupTextPositionX) + linkedListRectPrevOptions.textIntervalX;
+              })
+              .attr("y", linkedListRectPrevOptions.groupTextPositionY)
+              .attr("font-family", "sans-serif")
+              .attr("font-size", "13px")
+              .attr("colorIndex", "white")
+              .attr("fill", "white");
+    };
+    var buildRectsNextGroup = function (i) {
+      if(linkedListRectNextGroup) {linkedListRectNextGroup.remove()};
+
+      linkedListRectNextGroup = linkedListSVG.selectAll("g.rectNode")
+              .data(linkedListData)
+              .enter()
+              .append("g")
+              .attr("class", function (d, i) {
+                return "linkedListRectNextNode" + i + " linkedListGroup";
+              })
+              .on("mouseover", function (d, i) {
+//                showCircle(i);
+              })
+              .on("mouseout", function (d, i) {
+//                hideCircle(i);
+              });
+
+      linkedListRectNextGroup
+              .append("rect")
+              .attr("width", linkedListRectNextOptions.width)
+              .attr("height", linkedListRectNextOptions.height)
+              .attr("x", function (d, i) {
+                return (i * linkedListRectNextOptions.positionX) + linkedListRectNextOptions.intervalX;
+              })
+              .attr("y", linkedListRectNextOptions.positionY)
+              .attr("rx", 6)
+              .attr("ry", 6)
+              .attr("class", function (d, i) {
+                return "rectNext rectNext" + i + " linkedListGroup";
+              })
+              .attr("linkID", "next")
+              .attr("rectNextIndex", function (d, i) {
+                return linkedListRectOptions.numbersArray[i + 1];
+              })
+              .attr("colorIndex", function (d, i) {
+                return linkedListRectOptions.numbersArray[i + 1];
+              })
+              .style("stroke", "black")
+              .style("stroke-width", 0.5)
+              .attr("fill", function (d, i) {
+                var colorIndex = d3.select(this).attr("rectNextIndex");
+                return colors.getColor(colorIndex);
+              });
+
+
+      linkedListRectNextGroup.append("text")
+              .text(function (d, i) {
+                return "NEXT";
+              })
+              .attr("class", function (d, i) {
+                return "rectNextText" + i + " linkedListGroup";
+              })
+              .attr("text-anchor", "middle")
+              .attr("x", function (d, i) {
+                return (i * linkedListRectNextOptions.groupTextPositionX) + linkedListRectNextOptions.textIntervalX;
+              })
+              .attr("y", linkedListRectNextOptions.groupTextPositionY - 15)
+              .attr("font-family", "sans-serif")
+              .attr("font-size", linkedListRectNextOptions.fontSize)
+              .attr("colorIndex", "white")
+              .attr("fill", "white");
+
+      linkedListRectNextGroup.append("text")
+              .text(function (d, i) {
+                var nextData = linkedListRectNextOptions.numbersArray[i + 1];
+                if (linkedListRectNextOptions.numbersArray.length === i + 1) {
+                  nextData = "null";
+                }
+                return nextData;
+              })
+              .attr("class", function (d, i) {
+                return "rectNextText" + i + " linkedListGroup";
+              })
+              .attr("text-anchor", "middle")
+              .attr("x", function (d, i) {
+                return (i * linkedListRectNextOptions.groupTextPositionX) + linkedListRectNextOptions.textIntervalX;
+              })
+              .attr("y", linkedListRectNextOptions.groupTextPositionY)
+              .attr("font-family", "sans-serif")
+              .attr("font-size", "13px")
+              .attr("colorIndex", "white")
+              .attr("fill", "white");
+    };
+    var buildRectsGroup = function (i) {
+      if(linkedListRectGroup) {linkedListRectGroup.remove()};
+
+      linkedListRectGroup = linkedListSVG.selectAll("g.rectNode")
+              .data(linkedListData)
+              .enter()
+              .append("g")
+              .attr("class", function (d, i) {
+                return "linkedListRectNode" + i + " linkedListGroup";
+              })
+              .on("mouseover", function (d, i) {
+              })
+              .on("mouseout", function (d, i) {
+              });
+
+      linkedListRectGroup
+              .append("rect")
+              .attr("x", function (d, i) {
+                return (i * linkedListRectOptions.positionX) + linkedListRectOptions.intervalX;
+              })
+              .attr("y", linkedListRectOptions.positionY)
+              .attr("class", function (d, i) {
+                return "linkedListRect" + i + " linkedListGroup";
+              })
+              .attr("rectIndex", function (d, i) {
+                return i;
+              })
+              .attr("colorIndex", function (d, i) {
+                return linkedListRectOptions.numbersArray[i];
+              })
+              .style("stroke", "black")
+              .style("stroke-width", 0.5)
+              .attr("fill", function (d, i) {
+                return colors.getColor(linkedListRectOptions.numbersArray[i]);
+              })
+              .attr("width", linkedListRectOptions.side)
+              .attr("height", linkedListRectOptions.side);
+
+
+      linkedListRectGroup.append("text")
+              .text(function (d, i) {
+                return linkedListRectOptions.numbersArray[i];
+              })
+              .attr("class", function (d, i) {
+                return "rectValueText" + i + " linkedListGroup";
+              })
+              .attr("text-anchor", "middle")
+              .attr("x", function (d, i) {
+                return (i * linkedListRectOptions.groupTextPositionX) + linkedListRectOptions.textIntervalX;
+              })
+              .attr("y", linkedListRectOptions.groupTextPositionY)
+              .attr("font-family", "sans-serif")
+              .attr("font-size", "13px")
+              .attr("colorIndex", "white")
+              .attr("fill", "white");
+    };
+    var buildIndexAxes = function () {
+      if(linkedListRectIndexAxesGroup) {linkedListRectIndexAxesGroup.remove()}
+
+      linkedListRectIndexAxesGroup = linkedListSVG.selectAll("g.rectNode")
+              .data(linkedListData)
+              .enter()
+              .append("g")
+              .attr("class", function (d, i) {
+                return "rectNode" + i + " indexTextGroup";
+              })
+              .on("mouseover", function (d, i) {
+//                showCircle(i);
+              })
+              .on("mouseout", function (d, i) {
+//                hideCircle(i);
+              });
+
+      linkedListRectIndexAxesGroup
+              .append("text")
+              .text(function (d, i) {
+                return i;
+              })
+              .attr("class", function (d, i) {
+                return "rectIndexText" + i  + " indexTextGroup";
+              })
+              .attr("text-anchor", "middle")
+              .attr("x", function (d, i) {
+                return (i * linkedListRectIndexAxesGroupOption.groupTextPositionX) + linkedListRectIndexAxesGroupOption.textIntervalX;
+              })
+              .attr("y", linkedListRectIndexAxesGroupOption.groupIndexTextPositionY)
+              .attr("font-family", "sans-serif")
+              .attr("font-size", "15px")
+              .style("stroke", "black")
+              .style("stroke-width", 0.1)
+              .attr("colorIndex", function (d, i) {
+                return linkedListRectIndexAxesGroupOption.numbersArray[i];
+              })
+              .attr("fill", function (d, i) {
+                return colors.getColor(linkedListRectIndexAxesGroupOption.numbersArray[i]);
+              });
+    };
+    var buildArrows = function () {
+      linkedListRectPrevGroup.selectAll("rect.rectPrev")
+              .each(function (d, i) {
+                buildArrow(this);
+              });
+      linkedListRectNextGroup.selectAll("rect.rectNext")
+              .each(function (d, i) {
+                buildArrow(this);
+              });
+    };
+    var buildArrow = function (element) {
+
+      if(d3.select(element).attr("class").split(" ")[0] !== "rectNext" && d3.select(element).attr("class").split(" ")[0] !== "rectPrev" ) {
+        return;
+      };
+
+      var colorIndex = d3.select(element).attr("colorIndex");
+      if (colorIndex == null) {
+        return;
+      }
+
+      var sx = Math.floor(d3.select(element).attr("x")) + 20;
+      var sy, tx, ty;
+
+      if(d3.select(element).attr("linkID") === "prev") {
+        sy = linkedListRectPrevOptions.arrowLineSourceY;
+        tx = sx - linkedListRectPrevOptions.positionX + linkedListRectPrevOptions.intervalX + linkedListRectPrevOptions.width;
+        ty = linkedListRectPrevOptions.arrowLineTargetY;
+      }
+      if(d3.select(element).attr("linkID") === "next") {
+        sy = linkedListRectNextOptions.arrowLineSourceY;
+        tx =  sx + linkedListRectNextOptions.positionX - linkedListRectNextOptions.intervalX + linkedListRectNextOptions.width;
+        ty = linkedListRectNextOptions.arrowLineTargetY;
+      }
+
+      var path = linkedListSVG.append("path")
+              .data([{
+                source: {x: sx, y: sy},
+                target: {x: tx, y: ty}
+              }])
+              .attr("class", "line linkedListLine")
+              .style("stroke", function (d, i) {
+                return colors.getColor(colorIndex);
+              })
+              .attr("fill", function (d, i) {
+//                console.log(i);
+                return "white";
+              })
+              .attr("fill-opacity", function (d, i) {
+//                console.log(i);
+                return "0.01";
+              })
+              .attr("d", lineData);
+
+//            console.log(path);
+
+      var line = d3.svg.line()
+              .x(function (point) {
+                return point.lx;
+              })
+              .y(function (point) {
+                return point.ly;
+              });
+
+      function lineData(d) {
+//            console.log("line");
+        var dx = d.target.x - d.source.x,
+                dy = d.target.y - d.source.y,
+                dr = dx + dy;
+        return "M" + (d.source.x + 0) + "," + d.source.y + "A" + dr + "," + dr + " 0 0,1 " + (d.target.x + 0) + "," + d.target.y;
+      }
+
+      var arrow = linkedListSVG.append("svg:path")
+              .attr("id", "arrow")
+              .style("stroke", "#707070")
+              .style("fill", function (d, i) {
+                return colors.getColor(colorIndex);
+              })
+              .attr("d", d3.svg.symbol().type("triangle-down")(10, 1));
+
+      arrow.transition()
+              .duration(500)
+              .ease("linear")
+              .attrTween("transform", translateAlong(path.node()));
+
+      function translateAlong(path) {
+        var l = path.getTotalLength();
+        var ps = path.getPointAtLength(0);
+        var pe = path.getPointAtLength(l);
+        var angl = Math.atan2(pe.y - ps.y, pe.x - ps.x) * (180 / Math.PI) - 45;
+        var rot_tran = "rotate(" + angl + ")";
+        return function (d, i, a) {
+
+          return function (t) {
+            var p = path.getPointAtLength(t * l);
+            return "translate(" + p.x + "," + p.y + ") " + rot_tran;
+          };
+        };
+      }
+
+      var totalLength = path.node().getTotalLength();
+
+      path
+              .attr("stroke-dasharray", totalLength + " " + totalLength)
+              .attr("stroke-dashoffset", function (d, i) {
+                return totalLength;
+              })
+              .transition()
+              .duration(500)
+              .ease("linear")
+              .attr("stroke-dashoffset", 0);
+    };
+    var buildEqualSign = function (cx, cy, i, searchIndex, item, cb) {
+      var pathTop = linkedListSVG.append("path")
+              .data([{
+                source: {x: cx + 8, y: cy - 3},
+                target: {x: cx + 18, y: cy - 3}
+              }])
+              .attr("id", "pathTop" + i)
+              .attr("class", "pathTop line")
+              .style("stroke", function () {
+                return colors.getColor(linkedListRectOptions.numbersArray[i]);
+              })
+              .style("stroke-width", 0.5)
+              .attr("d", function (d) {
+                var dx = d.target.x - d.source.x,
+                        dy = d.target.y - d.source.y,
+                        dr = 0;
+                return "M" + (d.source.x + 0) + "," + d.source.y + "A" + dr + "," + dr + " 0 0,1 " + (d.target.x + 0) + "," + d.target.y;
+              });
+      var pathBottom = linkedListSVG.append("path")
+              .data([{
+                source: {x: cx + 8, y: cy + 3},
+                target: {x: cx + 18, y: cy + 3}
+              }])
+              .attr("id", "pathBottom" + i)
+              .attr("class", "pathBottom line")
+              .style("stroke", function () {
+                return colors.getColor(linkedListRectOptions.numbersArray[i]);
+              })
+              .style("stroke-width", 0.5)
+              .attr("d", function (d) {
+                var dx = d.target.x - d.source.x,
+                        dy = d.target.y - d.source.y,
+                        dr = 0;
+                return "M" + (d.source.x + 0) + "," + d.source.y + "A" + dr + "," + dr + " 0 0,1 " + (d.target.x + 0) + "," + d.target.y;
+              });
+
+      return cb();
+    };
+    var buildNotEqualSign = function (cx, cy, i) {
+      var pathNotEqual = linkedListSVG.append("path")
+              .data([
+                {
+                  source: {x: cx + 7, y: cy + 9},
+                  target: {x: cx + 18, y: cy - 9}
+                }
+              ])
+              .attr("id", "pathNotEqual" + i)
+              .attr("class", "line")
+              .style("stroke", "red")
+              .style("stroke-width", 0.5)
+              .attr("d", function (d) {
+                var dx = d.target.x - d.source.x,
+                        dy = d.target.y - d.source.y,
+                        dr = 0;
+                return "M" + (d.source.x + 0) + "," + d.source.y + "A" + dr + "," + dr + " 0 0,1 " + (d.target.x + 0) + "," + d.target.y;
+              });
+    };
+    var addSearchElement = function (data, id) {
+      if(d3.select("#searchElement")) {d3.select("#searchElement").remove()}
+
+      var circle = linkedListSVG.append("circle")
+              .attr("id", "searchElement")
+              .attr("cx", searchElementOptions[id].cx)
+              .attr("cy", searchElementOptions[id].cy)
+              .attr("r", 13 + "px");
+
+      if(d3.select("#rectSearchText")) {
+        d3.select("#rectSearchText").remove();
+        d3.select(".pathBottom").remove();
+        d3.select(".pathTop").remove();
+      }
+      var circleSearchIndexText = linkedListSVG.append("text")
+              .text(data)
+              .attr("id", "rectSearchText")
+              .attr("class", function (d, i) {
+                return "rectSearchIndexText" + i;
+              })
+              .attr("text-anchor", "middle")
+              .attr("x", searchElementOptions[id].x)
+              .attr("y", searchElementOptions[id].y)
+              .attr("font-family", "sans-serif")
+              .attr("font-size", "13px")
+              .attr("fill", "white");
+    };
+    var searchElement = function (element) {
+      // let requests = linkedListData.reduce((promiseChain, item, i) => { //todo: new JS syntax () => {}
+      //     return promiseChain.then(() => new Promise((resolve) => {
+      //         if(asyncFunction(item, resolve, i, element));
+      //     }));
+      // }, Promise.resolve());
+      //     console.log(element);
+
+      var requests = linkedListData.reduce(function(promiseChain, item, i) {
+        return promiseChain.then(function() {
+          return new Promise(function(resolve) {
+            if(asyncFunction(item, resolve, i, element));
+          })});
+      }, Promise.resolve());
+
+      function asyncFunction(item, cb, i, element) {
+        setTimeout(function() {
+          // console.log("element: " + element + " i: " + i);
+          var cx = Math.floor(d3.select(".linkedListRect" + i).attr("x")) - 3;
+          var cy = Math.floor(d3.select(".linkedListRect" + i).attr("y")) - 34;
+
+          elementsHandler[element](cx, cy, i, item, cb, element);
+        }, movingSpeed.searchIndex);
+      }
+    };
+    var updateLinkedList = function(id) {
+      var orderSteps = new OrderSteps();
+      var requests = orderSteps[id]().reduce(function(promiseChain, item) {
+        return promiseChain.then(function() {
+          return new Promise(function(resolve) {
+            if (asyncFunction(item, resolve, id));
+          })
+        });
+      }, Promise.resolve());
+
+      function asyncFunction(item, cb, id) {
+        // console.log("item: ", item);
+        setTimeout(function() {
+          steps[item.step](id);
+          cb();
+        }, item.timeout);
+
+      };
+    };
+    var regenerateLinkedList = function () {
+      d3.selectAll(".linkedListRectSvg").remove();
+      addLinkedList();
+    };
+    var zoomElement = function (i) {
+      var currentX;
+      var currentY;
+      var currentW;
+      var currentH;
+      var destinationX;
+      var zoomElement = d3.select(".rectPrev" + i);
+      zoomRects(zoomElement);
+
+      zoomElement = d3.select(".rectNext" + i);
+      zoomRects(zoomElement);
+
+      zoomElement = d3.select(".linkedListRect" + i);
+      zoomRects(zoomElement);
+
+      zoomElement = d3.selectAll(".rectPrevText" + i);
+      destinationX = Math.floor(zoomElement.attr("x")) - linkedListRectOptions.scaleFactor / 2;
+      zoomRectsText(zoomElement, destinationX);
+
+      zoomElement = d3.selectAll(".rectNextText" + i);
+      destinationX = Math.floor(zoomElement.attr("x")) + linkedListRectOptions.scaleFactor / 2;
+      zoomRectsText(zoomElement, destinationX);
+
+
+      function zoomRects(element) {
+        element.transition()
+                .duration(linkedListRectOptions.zoomDuration)
+                .attr("x", function (d) {
+                  currentX = Math.floor(d3.select(this).attr("x"));
+                  return Math.floor(d3.select(this).attr("x")) - linkedListRectOptions.scaleFactor / 2;
+                })
+                .attr("y", function (d) {
+                  currentY = Math.floor(d3.select(this).attr("y"));
+                  return Math.floor(d3.select(this).attr("y")) - linkedListRectOptions.scaleFactor / 2;
+                })
+                .attr("width", function (d) {
+                  currentW = Math.floor(d3.select(this).attr("width"));
+                  return Math.floor(d3.select(this).attr("width")) + linkedListRectOptions.scaleFactor;
+                })
+                .attr("height", function (d) {
+                  currentH = Math.floor(d3.select(this).attr("height"));
+                  return Math.floor(d3.select(this).attr("height")) + linkedListRectOptions.scaleFactor;
+                })
+                .transition()
+                .duration(linkedListRectOptions.zoomDuration)
+                .attr("x", currentX)
+                .attr("y", currentY)
+                .attr("width", currentW)
+                .attr("height", currentH);
+      }
+      function zoomRectsText(element, destinationX) {
+        currentX = Math.floor(element.attr("x"));
+        element.transition()
+                .duration(linkedListRectOptions.zoomDuration)
+                .attr("x", destinationX)
+                .transition()
+                .duration(linkedListRectOptions.zoomDuration)
+                .attr("x", currentX);
+      }
+    };
+    var linkedListEnableZoomFeature = function () {
+      d3.select('.linkedListRectSvg').call(d3.behavior.zoom()
+      // .center([svgOptions.width / 2, svgOptions.height / 2])
+              .scaleExtent([0.1, 3])
+              .on("zoom", elementsHandler['zoomLinkedList']));
+    };
+    var linkedListDisableZoomFeature = function () {
+      d3.select('.linkedListRectSvg').call(d3.behavior.zoom()
+              .on("zoom", null));
+    };
+
+    function listeners() {
+      var zoomLinkedList = function () {
+        $("#linkedListZoomToggle").change(function() {
+          if(this.checked) {
+            linkedListEnableZoomFeature();
+          } else {
+            // console.log("linkedListDisableZoomFeature");
+            linkedListDisableZoomFeature();
+          }
+        });
+      };
+      var addFirstButton = function () {
+        $("#addFirst").click(function(e) {
+          e.preventDefault();
+
+          var firstValue = Math.floor($("#addFirstData").val());
+
+          linkedListData.unshift(firstValue);
+
+          updateLinkedList(this.id);
+
+          $("#addFirstData").val(''); //todo: clear value in input fields?
+        });
+      };
+      var addLastButton = function () {
+        $("#addLast").click(function(e) {
+          e.preventDefault();
+          var lastValue = Math.floor($("#addLastData").val());
+
+          linkedListData.push(lastValue);
+
+          updateLinkedList(this.id);
+
+          $("#addLastData").val(''); //todo: clear value in input fields?
+        });
+      };
+      var searchIndexButton = function () {
+        $("#searchIndex").click(function(e) {
+          e.preventDefault();
+
+          var indexData = Math.floor($("#searchIndexData").val());
+          if(indexData <= linkedListData.length - 1 && indexData >= 0) {
+            addSearchElement(indexData, this.id);
+            searchElement(this.id);
+          } else {
+            $("#searchIndexData").notify(indexData + " not found", { position:"right" });
+          }
+
+          // $("#indexData").val(''); //todo: clear value in input fields?
+        });
+      };
+      var searchValueButton = function () {
+        $("#searchValue").click(function(e) {
+          e.preventDefault();
+
+          var valueData = Math.floor($("#searchValueData").val());
+
+          addSearchElement(valueData, this.id);
+          searchElement(this.id);
+
+          // $("#valueData").val(''); //todo: clear value in input fields?
+        });
+      };
+      var removeFirstButton = function () {
+        $("#removeFirst").click(function(e) {
+          e.preventDefault();
+          console.log("removeFirst");
+
+          linkedListData.shift();
+
+          updateLinkedList(this.id);
+        });
+      };
+      var removeLastButton = function () {
+        $("#removeLast").click(function(e) {
+          e.preventDefault();
+
+          linkedListData.pop();
+
+          updateLinkedList(this.id);
+        });
+      };
+      var regenerate = function () {
+        $("#regenerateLinkedList").click(function(e) {
+          e.preventDefault();
+
+          linkedListData.splice(0, linkedListData.length); //todo: if used linkedListData = [1, 5, 8, 5, 7, 13] there error with instance
+          linkedListDefaultData.forEach(function (val) {
+            linkedListData.push(val);
+          });
+
+          regenerateLinkedList(this.id);
+        });
+      };
+
+
+      return {
+        init: function () {
+          zoomLinkedList();
+          addFirstButton();
+          addLastButton();
+          searchIndexButton();
+          searchValueButton();
+          removeFirstButton();
+          removeLastButton();
+          regenerate();
+        }
+      }
+    }
+
+    function SearchElementOptions() {
+      this.searchIndex = {cx: 14, cy: 251, x: 14, y: 255};
+      this.searchValue = {cx: 14, cy: 101, x: 14, y: 105};
+    };
+
+    function OrderSteps() {
+      var orderSteps = [];
+      var removeArrows = function (timeout) {
+        return {
+          step: "removeArrows",
+          timeout: timeout
+        };
+      };
+      var removeIndexAxes = function (timeout) {
+        return {
+          step: "removeIndexAxes",
+          timeout: timeout
+        };
+      };
+      var moveRectsGroup = function (timeout) {
+        return {
+          step: "moveRectsGroup",
+          timeout: timeout
+        };
+      };
+      var moveLeftRectsGroup = function (timeout) {
+        return {
+          step: "moveLeftRectsGroup",
+          timeout: timeout
+        };
+      };
+      var addRectGroup = function (timeout) {
+        return {
+          step: "addRectGroup",
+          timeout: timeout
+        };
+      };
+      var buildArrows = function (timeout) {
+        return {
+          step: "buildArrows",
+          timeout: timeout
+        };
+      };
+      var updateIndexTextGroup = function (timeout) {
+        return {
+          step: "updateIndexTextGroup",
+          timeout: timeout
+        };
+      };
+      var moveIndex = function (timeout) {
+        return {
+          step: "moveIndex",
+          timeout: timeout
+        };
+      };
+      var moveValue = function (timeout) {
+        return {
+          step: "moveValue",
+          timeout: timeout
+        };
+      };
+      var moveSearchElement = function (timeout) {
+        return {
+          step: "moveSearchElement",
+          timeout: timeout
+        };
+      };
+      var moveBackSearchElement = function (timeout) {
+        return {
+          step: "moveBackSearchElement",
+          timeout: timeout
+        };
+      };
+      var buildEqualSign = function (timeout) {
+        return {
+          step: "buildEqualSign",
+          timeout: timeout
+        };
+      };
+      var validateElement = function (timeout) {
+        return {
+          step: "validateElement",
+          timeout: timeout
+        };
+      };
+      var removeFirstElement = function (timeout) {
+        return {
+          step: "removeFirstElement",
+          timeout: timeout
+        };
+      };
+      var removeLastElement = function (timeout) {
+        return {
+          step: "removeLastElement",
+          timeout: timeout
+        };
+      };
+      var zoomLinkedList = function (timeout) {
+        return {
+          step: "zoomLinkedList",
+          timeout: timeout
+        };
+      };
+
+      this.addFirst = function () {
+        orderSteps.push(removeArrows(movingSpeed.initInterval));
+        orderSteps.push(removeIndexAxes(movingSpeed.initInterval));
+        orderSteps.push(zoomLinkedList(movingSpeed.zoomDuration));
+        orderSteps.push(moveRectsGroup(movingSpeed.initInterval));
+        orderSteps.push(addRectGroup(movingSpeed.elementsGroup));
+        orderSteps.push(buildArrows(movingSpeed.initInterval));
+        orderSteps.push(updateIndexTextGroup(movingSpeed.initInterval));
+
+        return orderSteps;
+      };
+      this.addLast = function () {
+        orderSteps.push(removeArrows(movingSpeed.initInterval));
+        orderSteps.push(removeIndexAxes(movingSpeed.initInterval));
+        orderSteps.push(zoomLinkedList(movingSpeed.zoomDuration));
+        orderSteps.push(addRectGroup(movingSpeed.initInterval));
+        orderSteps.push(buildArrows(movingSpeed.initInterval));
+        orderSteps.push(updateIndexTextGroup(movingSpeed.initInterval));
+
+        return orderSteps;
+      };
+      this.removeFirst = function () {
+        orderSteps.push(removeArrows(movingSpeed.initInterval));
+        orderSteps.push(removeIndexAxes(movingSpeed.initInterval));
+        orderSteps.push(removeFirstElement(movingSpeed.removeElementsGroup));
+        orderSteps.push(moveLeftRectsGroup(movingSpeed.initInterval));
+        orderSteps.push(zoomLinkedList(movingSpeed.zoomDuration));
+
+        orderSteps.push(addRectGroup(movingSpeed.initInterval));
+        orderSteps.push(buildArrows(movingSpeed.initInterval));
+        orderSteps.push(updateIndexTextGroup(movingSpeed.initInterval));
+
+        return orderSteps;
+      };
+      this.removeLast = function () {
+        orderSteps.push(removeArrows(movingSpeed.initInterval));
+        orderSteps.push(removeIndexAxes(movingSpeed.initInterval));
+        orderSteps.push(removeLastElement(movingSpeed.removeElementsGroup));
+        orderSteps.push(addRectGroup(movingSpeed.initInterval));
+        orderSteps.push(zoomLinkedList(movingSpeed.zoomDuration));
+        orderSteps.push(buildArrows(movingSpeed.initInterval));
+        orderSteps.push(updateIndexTextGroup(movingSpeed.initInterval));
+
+        return orderSteps;
+      };
+      this.searchIndex = function () {
+        orderSteps.push(moveBackSearchElement(movingSpeed.searchIndex));
+        orderSteps.push(moveSearchElement(movingSpeed.searchIndex));
+        orderSteps.push(moveIndex(movingSpeed.searchIndex));
+        orderSteps.push(buildEqualSign(movingSpeed.searchIndex));
+        orderSteps.push(validateElement(movingSpeed.searchIndex));
+
+        return orderSteps;
+      };
+      this.searchValue = function () {
+        orderSteps.push(moveValue(movingSpeed.searchValue));
+        orderSteps.push(moveBackSearchElement(movingSpeed.searchValue));
+        orderSteps.push(moveSearchElement(movingSpeed.searchValue));
+        orderSteps.push(buildEqualSign(movingSpeed.searchValue));
+        orderSteps.push(validateElement(movingSpeed.searchValue));
+
+        return orderSteps;
+      };
+    }
+
+    function Steps() {
+      this.removeArrows = function () {
+        d3.selectAll(".linkedListLine").remove();
+        d3.selectAll("#arrow").remove();
+      };
+      this.removeIndexAxes = function () {
+        linkedListRectIndexAxesGroup.remove()
+      };
+      this.moveRectsGroup = function (id) {
+        var rectsGroup = linkedListSVG.selectAll(".linkedListGroup");
+        // console.log("move elements")
+        rectsGroup.transition()
+                .each("end", function () {
+                  var movingElement =  d3.select(this);
+                  moveElement[id](movingElement);
+                });
+      };
+      this.moveLeftRectsGroup = function (id) {
+        var rectsGroup = linkedListSVG.selectAll(".linkedListGroup");
+        // console.log("move elements")
+        rectsGroup.transition()
+                .each("end", function () {
+                  var movingElement =  d3.select(this);
+                  moveElement[id](movingElement);
+                });
+      };
+      this.addRectGroup = function () {
+        buildRectsPrevGroup();
+        buildRectsNextGroup();
+        buildRectsGroup();
+      };
+      this.buildArrows = function () {
+        buildArrows();
+      };
+      this.updateIndexTextGroup = function () {
+        buildIndexAxes();
+      };
+      this.moveIndex = function (cx, cy, i, searchIndex, item, cb) {
+        return moveElement["moveIndex"](cx, cy, i, searchIndex, item, cb);
+      };
+      this.moveValue = function (cx, cy, i, searchIndex, item, cb) {
+        return moveElement["moveValue"](cx, cy, i, searchIndex, item, cb);
+      };
+      this.moveSearchElement = function (cx, cy, i, searchIndex, item, cb) {
+        return moveElement["moveSearchElement"](cx, cy, i, searchIndex, item, cb);
+      };
+      this.moveBackSearchElement = function (cx, cy, i, searchIndex, item, cb) {
+        return moveElement["moveBackSearchElement"](cx, cy, i, searchIndex, item, cb);
+      };
+      this.buildEqualSign = function (cx, cy, i, searchIndex, item, cb) {
+        return buildEqualSign(cx, cy, i, searchIndex, item, cb);
+      };
+      this.validateElement = function (cx, cy, i, searchIndex, item, cb, callback, id) {
+        return elementsHandler["validateElement"](cx, cy, i, searchIndex, item, cb, callback, id)
+      };
+      this.removeFirstElement = function () {
+        d3.selectAll(".linkedListRectPrevNode0").remove();
+        d3.selectAll(".linkedListRectNextNode0").remove();
+        d3.selectAll(".linkedListRectNode0").remove();
+      };
+      this.removeLastElement = function (id) {
+        d3.selectAll(".rectPrevNode" + id).remove();
+        d3.selectAll(".rectNextNode" + id).remove();
+        d3.selectAll(".rectNode" + id).remove();
+      };
+      this.zoomLinkedList = function () {
+        if(linkedListData.length < svgOptions.minElements) {return;}
+        var zoom = d3.behavior.zoom()
+                .on("zoom", zoomed);
+
+        function zoomed() {
+          linkedListSVG.transition()
+          // .duration(movingSpeed.zoomDuration)
+          // .duration(750)
+                  .attr("transform", "translate(" + d3.event.translate + ")scale("+ (d3.event.scale * (svgOptions.initialArrayLength / linkedListData.length)) +")");
+        }
+
+        d3.select('.linkedListRectSvg').transition()
+        // .duration(5000)
+                .call(zoom.event);
+      };
+    }
+
+    function MoveElement() {
+      this.addFirst = function (movingElement) {
+        movingElement.transition().duration(movingSpeed.elementsGroup)
+                .attr("x", function (d, i) {
+                  return Math.floor(d3.select(this).attr("x")) + linkedListRectOptions.positionX;
+                })
+                .attr("fill", function () {
+                  return colors.getColor(d3.select(this).attr("colorIndex"));
+                });
+      };
+      this.removeFirst = function (movingElement) {
+        movingElement.transition().duration(movingSpeed.elementsGroup)
+                .attr("x", function (d, i) {
+                  return Math.floor(d3.select(this).attr("x")) - linkedListRectOptions.positionX;
+                })
+                .attr("fill", function () {
+                  return colors.getColor(d3.select(this).attr("colorIndex"));
+                });
+      };
+      this.addLast = function () {return;};
+      this.moveIndexTextGroup = function (movingElement) {
+        movingElement.attr("y", function (d, i) {
+          return Math.floor(d3.select(this).attr("y")) + linkedListRectIndexAxesGroupOption.movingToPositionY;
+        })
+                .attr("fill", function () {
+                  return colors.getColor(d3.select(this).attr("colorIndex"));
+                });
+      };
+      this.moveSearchElement = function (cx, cy, i, searchIndex, item, cb) {
+        // console.log(cx, cy, i);
+        d3.select("#searchElement").transition().duration(movingSpeed.searchValue)
+                .attr("cx", cx - 10)
+                .attr("cy", cy)
+
+        d3.select("#rectSearchText").transition().duration(movingSpeed.searchValue)
+                .attr("x", cx - 10)
+                .attr("y", cy + 4);
+
+        return cb();
+      };
+      this.moveBackSearchElement = function (cx, cy, i, searchIndex, item, cb) {
+        // console.log(cx, cy, i);
+        d3.select("#pathTop" + (i - 1)).remove();
+        d3.select("#pathBottom" + (i - 1)).remove();
+        d3.select("#pathNotEqual" + (i - 1)).remove();
+        d3.select(".rectIndexText" + (i - 1))
+                .attr("y", linkedListRectIndexAxesGroupOption.groupIndexTextPositionY);
+        d3.select(".rectValueText" + (i - 1))
+                .attr("y", linkedListRectOptions.groupTextPositionY)
+                .attr("fill", "white");
+
+        return cb();
+      };
+      this.moveIndex = function (cx, cy, i, searchIndex, item, cb) {
+        var rectIndexText = d3.select(".rectIndexText" + i);
+        rectIndexText.transition().duration(movingSpeed.searchIndex)
+                .attr("y", linkedListRectIndexAxesGroupOption.movingToPositionY);
+        return cb();
+      };
+      this.moveValue = function (cx, cy, i, searchIndex, item, cb) {
+        var rectValueText = d3.select(".rectValueText" + i);
+        rectValueText.transition().duration(movingSpeed.searchValue)
+                .attr("y", linkedListRectOptions.movingToPositionY)
+                .attr("fill", function (d) {
+                  return colors.getColor(linkedListData[i]);
+                });
+
+        return cb();
+      };
+    }
+
+    function ElementsHandler() {
+      this.validateElement = function (cx, cy, i, validateElement, item, cb, callback, id) {
+        // console.log(cx, cy, i, validateElement, item, cb, callback);
+        // console.log(cx, cy, i, validateElement, item, cb, callback, id);
+
+        if (item !== validateElement) {
+          d3.select("#pathTop" + i)
+                  .style("stroke", "red");
+          d3.select("#pathBottom" + i)
+                  .style("stroke", "red");
+
+          buildNotEqualSign(cx, cy, i);
+
+          callback();
+
+          this.isNotFound(i, validateElement, id);
+        } else {
+          d3.select("#pathTop" + i)
+                  .style("stroke", function () {
+                    return colors.getColor(linkedListRectOptions.numbersArray[i]);
+                  });
+          d3.select("#pathBottom" + i)
+                  .style("stroke", function () {
+                    return colors.getColor(linkedListRectOptions.numbersArray[i]);
+                  })
+                  .transition().delay(300)
+                  .each("end", function () {
+                    d3.select("#searchElement")
+                            .style("fill", function () {
+                              return colors.getColor(linkedListRectOptions.numbersArray[i]);
+                            });
+
+                    zoomElement(i);
+                  })
+                  .transition().delay(circleOptions.initDuration * 2.5)
+                  .each("end", function () {
+                    elementsHandler.resetElement(i);
+                  });
+        }
+      };
+      this.searchIndex = function (cx, cy, i, serchingValue, callback, id) {
+        var searchIndex = Math.floor(d3.select("#rectSearchText").text());
+        cy += 150;
+
+        var orderSteps = new OrderSteps();
+
+        var requests = orderSteps[id]().reduce(function(promiseChain, item) {
+          return promiseChain.then(function() {
+            return new Promise(function(resolve) {
+              if (asyncFunction(item, resolve, id, i, cx, cy, searchIndex, callback, i));
+            })});
+        }, Promise.resolve());
+
+        function asyncFunction(item, cb, id, i, cx, cy, searchIndex, callback, serchingValue) {
+          setTimeout(function() {
+            steps[item.step](cx, cy, i, searchIndex, serchingValue, cb, callback, id);
+          }, item.timeout);
+
+        };
+      };
+      this.searchValue = function (cx, cy, i, serchingValue, callback, id) {
+        var searchValue = Math.floor(d3.select("#rectSearchText").text());
+        var orderSteps = new OrderSteps();
+
+        var requests = orderSteps[id]().reduce(function(promiseChain, item) {
+          return promiseChain.then(function() {
+            return new Promise(function(resolve) {
+              // if (asyncFunction(item, resolve, id, i, cx, cy, searchIndex, callback, serchingValue)) {console.log(item.step)} else {console.log(item.step)};
+              // if (asyncFunction(item, resolve, id, i, cx, cy, searchValue, callback, serchingValue));
+              asyncFunction(item, resolve, id, i, cx, cy, searchValue, callback, serchingValue);
+            })
+          });
+        }, Promise.resolve());
+
+        function asyncFunction(item, cb, id, i, cx, cy, searchIndex, callback, serchingValue) {
+          setTimeout(function() {
+            // console.log(item.step);
+            steps[item.step](cx, cy, i, searchIndex, serchingValue, cb, callback, id);
+            // console.log(result);
+          }, item.timeout);
+        };
+      };
+      this.isNotFound = function (i, validateElement, id) {
+        if(linkedListData.length - 1 == i) {
+          elementsHandler.resetElement(i);
+          // console.log(id)
+          $("#" + id + "Data").notify(validateElement + " not found", { position:"right" });
+        }
+      };
+      this.resetElement = function (i) {
+        d3.select(".rectValueText" + i)
+                .attr("y", linkedListRectOptions.groupTextPositionY)
+                .attr("fill", "white");
+
+        d3.select(".rectIndexText" + i)
+                .attr("y", linkedListRectIndexAxesGroupOption.groupIndexTextPositionY);
+
+        d3.select("#searchElement").remove();
+        d3.select("#rectSearchText").remove();
+        d3.select("#pathTop" + i).remove();
+        d3.select("#pathBottom" + i).remove();
+        d3.select("#pathNotEqual" + i).remove();
+      };
+      this.zoomLinkedList = function () {
+        linkedListSVG.attr("transform", "translate(" + d3.event.translate + ")scale("+ d3.event.scale +")");
+      };
+    }
+
+    Polymer({
+      is: "clap-linkedlist",
+      ready: function() {
+        this.scopeSubtree(this.$.linkedlist, true);
+
+        linkedListSVG = d3.select(this.$.linkedlist).append("svg")
+                .attr("width", "100%")
+                .attr("height", 300)
+                .attr("class", "linkedListRectSvg")
+                .append("g")
+                .attr("transform", "scale(1)")
+                .append("g");
+
+        linkedListSVG.append("rect")
+                .attr("width", "100%")
+                .attr("height", "100%")
+                .attr("fill", "none");
+
+
+
+        addLinkedList();
+//        listeners().init();
+      },
+      listeners: {
+        'regenerateLinkedList.tap': 'regenerateLinkedList'
+      },
+      regenerateLinkedList: function () {
+
+        linkedListData.splice(0, linkedListData.length); //todo: if used linkedListData = [1, 5, 8, 5, 7, 13] there error with instance
+        linkedListDefaultData.forEach(function (val) {
+          linkedListData.push(val);
+        });
+
+        regenerateLinkedList();
+      }
+
+    })
+  </script>
+
+</dom-module>
