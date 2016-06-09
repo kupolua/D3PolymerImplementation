@@ -100,9 +100,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <div class="row">
           <div class="col-xs-8 col-sm-6 col-md-6 col-lg-4">
             <div class="input-group form-group">
-                                <span class="input-group-btn">
-                                    <button class="btn btn-success btn-sm" id="removeLast" type="button">Remove last element</button>
-                                </span>
+                <span class="input-group-btn">
+                    <button class="btn btn-success btn-sm" id="removeLast" type="button">Remove last element</button>
+                </span>
             </div>
           </div>
         </div>
@@ -165,7 +165,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     var linkedListRectOptions = {
       side: 50,
       positionX: 180,
-      positionY: 135, //135
+      positionY: 135,
       groupTextPositionX: 180,
       groupTextPositionY: 165,
       groupIndexTextPositionY: 105,
@@ -230,6 +230,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       buildRectsGroup();
       buildArrows();
       buildIndexAxes();
+      resetZoomLinkedList();
     };
     var buildRectsPrevGroup = function () {
       if(linkedListRectPrevGroup) {linkedListRectPrevGroup.remove()};
@@ -242,10 +243,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 return "linkedListRectPrevNode" + i;
               })
               .on("mouseover", function (d, i) {
-//                showCircle(i);
               })
               .on("mouseout", function (d, i) {
-//                hideCircle(i);
               });
 
       linkedListRectPrevGroup
@@ -253,7 +252,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               .attr("width", linkedListRectPrevOptions.width)
               .attr("height", linkedListRectPrevOptions.height)
               .attr("x", function (d, i) {
-                // console.log(d, i);
                 return (i * linkedListRectPrevOptions.positionX) + linkedListRectPrevOptions.intervalX;
               })
               .attr("y", linkedListRectPrevOptions.positionY)
@@ -326,10 +324,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 return "linkedListRectNextNode" + i + " linkedListGroup";
               })
               .on("mouseover", function (d, i) {
-//                showCircle(i);
               })
               .on("mouseout", function (d, i) {
-//                hideCircle(i);
               });
 
       linkedListRectNextGroup
@@ -465,10 +461,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 return "rectNode" + i + " indexTextGroup";
               })
               .on("mouseover", function (d, i) {
-//                showCircle(i);
               })
               .on("mouseout", function (d, i) {
-//                hideCircle(i);
               });
 
       linkedListRectIndexAxesGroup
@@ -539,17 +533,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               .style("stroke", function (d, i) {
                 return colors.getColor(colorIndex);
               })
-              .attr("fill", function (d, i) {
-//                console.log(i);
-                return "white";
-              })
-              .attr("fill-opacity", function (d, i) {
-//                console.log(i);
-                return "0.01";
-              })
+              .attr("fill", "none")
+              .attr("stroke-width", "2")
               .attr("d", lineData);
-
-//            console.log(path);
 
       var line = d3.svg.line()
               .x(function (point) {
@@ -560,14 +546,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               });
 
       function lineData(d) {
-//            console.log("line");
         var dx = d.target.x - d.source.x,
                 dy = d.target.y - d.source.y,
                 dr = dx + dy;
+
         return "M" + (d.source.x + 0) + "," + d.source.y + "A" + dr + "," + dr + " 0 0,1 " + (d.target.x + 0) + "," + d.target.y;
       }
 
-      var arrow = linkedListSVG.append("svg:path")
+      var arrow = linkedListSVG.append("path")
               .attr("id", "arrow")
               .style("stroke", "#707070")
               .style("fill", function (d, i) {
@@ -665,20 +651,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               });
     };
     var addSearchElement = function (data, id) {
-      if(d3.select("#searchElement")) {d3.select("#searchElement").remove()}
+      if(linkedListSVG.select("#searchElement")) {linkedListSVG.select("#searchElement").remove()}
 
       var circle = linkedListSVG.append("circle")
               .attr("id", "searchElement")
               .attr("cx", searchElementOptions[id].cx)
               .attr("cy", searchElementOptions[id].cy)
+              .attr("fill", "red")
               .attr("r", 13 + "px");
 
-      if(d3.select("#rectSearchText")) {
-        d3.select("#rectSearchText").remove();
-        d3.select(".pathBottom").remove();
-        d3.select(".pathTop").remove();
+      if(linkedListSVG.select("#rectSearchText")) {
+        linkedListSVG.select("#rectSearchText").remove();
+        linkedListSVG.select(".pathBottom").remove();
+        linkedListSVG.select(".pathTop").remove();
       }
-      var circleSearchIndexText = linkedListSVG.append("text")
+      linkedListSVG.append("text")
               .text(data)
               .attr("id", "rectSearchText")
               .attr("class", function (d, i) {
@@ -708,9 +695,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       function asyncFunction(item, cb, i, element) {
         setTimeout(function() {
-          // console.log("element: " + element + " i: " + i);
-          var cx = Math.floor(d3.select(".linkedListRect" + i).attr("x")) - 3;
-          var cy = Math.floor(d3.select(".linkedListRect" + i).attr("y")) - 34;
+          var cx = Math.floor(linkedListSVG.select(".linkedListRect" + i).attr("x")) - 3;
+          var cy = Math.floor(linkedListSVG.select(".linkedListRect" + i).attr("y")) - 34;
 
           elementsHandler[element](cx, cy, i, item, cb, element);
         }, movingSpeed.searchIndex);
@@ -727,17 +713,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }, Promise.resolve());
 
       function asyncFunction(item, cb, id) {
-        // console.log("item: ", item);
         setTimeout(function() {
           steps[item.step](id);
           cb();
         }, item.timeout);
-
       };
     };
     var regenerateLinkedList = function () {
-      d3.selectAll(".linkedListRectSvg").remove();
+      linkedListSVG.selectAll("g").remove();
+      linkedListSVG.selectAll("path").remove();
       addLinkedList();
+    };
+    var resetZoomLinkedList = function () {
+      linkedListSVG.attr("transform", "translate(1)scale(1)");
     };
     var zoomElement = function (i) {
       var currentX;
@@ -745,20 +733,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       var currentW;
       var currentH;
       var destinationX;
-      var zoomElement = d3.select(".rectPrev" + i);
+      var zoomElement = linkedListSVG.select(".rectPrev" + i);
       zoomRects(zoomElement);
 
-      zoomElement = d3.select(".rectNext" + i);
+      zoomElement = linkedListSVG.select(".rectNext" + i);
       zoomRects(zoomElement);
 
-      zoomElement = d3.select(".linkedListRect" + i);
+      zoomElement = linkedListSVG.select(".linkedListRect" + i);
       zoomRects(zoomElement);
 
-      zoomElement = d3.selectAll(".rectPrevText" + i);
+      zoomElement = linkedListSVG.selectAll(".rectPrevText" + i);
       destinationX = Math.floor(zoomElement.attr("x")) - linkedListRectOptions.scaleFactor / 2;
       zoomRectsText(zoomElement, destinationX);
 
-      zoomElement = d3.selectAll(".rectNextText" + i);
+      zoomElement = linkedListSVG.selectAll(".rectNextText" + i);
       destinationX = Math.floor(zoomElement.attr("x")) + linkedListRectOptions.scaleFactor / 2;
       zoomRectsText(zoomElement, destinationX);
 
@@ -800,14 +788,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     };
     var linkedListEnableZoomFeature = function () {
-      d3.select('.linkedListRectSvg').call(d3.behavior.zoom()
-      // .center([svgOptions.width / 2, svgOptions.height / 2])
-              .scaleExtent([0.1, 3])
-              .on("zoom", elementsHandler['zoomLinkedList']));
+      linkedListSVG.call(d3.behavior.zoom()
+        .scaleExtent([0.1, 3])
+        .on("zoom", elementsHandler['zoomLinkedList']));
     };
     var linkedListDisableZoomFeature = function () {
-      d3.select('.linkedListRectSvg').call(d3.behavior.zoom()
-              .on("zoom", null));
+      linkedListSVG.call(d3.behavior.zoom()
+        .on("zoom", null));
     };
 
     function listeners() {
@@ -816,7 +803,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           if(this.checked) {
             linkedListEnableZoomFeature();
           } else {
-            // console.log("linkedListDisableZoomFeature");
             linkedListDisableZoomFeature();
           }
         });
@@ -876,7 +862,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       var removeFirstButton = function () {
         $("#removeFirst").click(function(e) {
           e.preventDefault();
-          console.log("removeFirst");
 
           linkedListData.shift();
 
@@ -1091,15 +1076,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     function Steps() {
       this.removeArrows = function () {
-        d3.selectAll(".linkedListLine").remove();
-        d3.selectAll("#arrow").remove();
+        linkedListSVG.selectAll(".linkedListLine").remove();
+        linkedListSVG.selectAll("#arrow").remove();
       };
       this.removeIndexAxes = function () {
         linkedListRectIndexAxesGroup.remove()
       };
       this.moveRectsGroup = function (id) {
         var rectsGroup = linkedListSVG.selectAll(".linkedListGroup");
-        // console.log("move elements")
         rectsGroup.transition()
                 .each("end", function () {
                   var movingElement =  d3.select(this);
@@ -1108,7 +1092,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       };
       this.moveLeftRectsGroup = function (id) {
         var rectsGroup = linkedListSVG.selectAll(".linkedListGroup");
-        // console.log("move elements")
         rectsGroup.transition()
                 .each("end", function () {
                   var movingElement =  d3.select(this);
@@ -1150,9 +1133,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         d3.selectAll(".linkedListRectNode0").remove();
       };
       this.removeLastElement = function (id) {
-        d3.selectAll(".rectPrevNode" + id).remove();
-        d3.selectAll(".rectNextNode" + id).remove();
-        d3.selectAll(".rectNode" + id).remove();
+        linkedListSVG.selectAll(".rectPrevNode" + id).remove();
+        linkedListSVG.selectAll(".rectNextNode" + id).remove();
+        linkedListSVG.selectAll(".rectNode" + id).remove();
       };
       this.zoomLinkedList = function () {
         if(linkedListData.length < svgOptions.minElements) {return;}
@@ -1161,14 +1144,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         function zoomed() {
           linkedListSVG.transition()
-          // .duration(movingSpeed.zoomDuration)
-          // .duration(750)
-                  .attr("transform", "translate(" + d3.event.translate + ")scale("+ (d3.event.scale * (svgOptions.initialArrayLength / linkedListData.length)) +")");
+            .attr("transform", "translate(" + d3.event.translate + ")scale("+ (d3.event.scale * (svgOptions.initialArrayLength / linkedListData.length)) +")");
         }
 
-        d3.select('.linkedListRectSvg').transition()
-        // .duration(5000)
-                .call(zoom.event);
+        linkedListSVG.transition()
+            .call(zoom.event);
       };
     }
 
@@ -1201,38 +1181,36 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 });
       };
       this.moveSearchElement = function (cx, cy, i, searchIndex, item, cb) {
-        // console.log(cx, cy, i);
-        d3.select("#searchElement").transition().duration(movingSpeed.searchValue)
+        linkedListSVG.select("#searchElement").transition().duration(movingSpeed.searchValue)
                 .attr("cx", cx - 10)
                 .attr("cy", cy)
 
-        d3.select("#rectSearchText").transition().duration(movingSpeed.searchValue)
+        linkedListSVG.select("#rectSearchText").transition().duration(movingSpeed.searchValue)
                 .attr("x", cx - 10)
                 .attr("y", cy + 4);
 
         return cb();
       };
       this.moveBackSearchElement = function (cx, cy, i, searchIndex, item, cb) {
-        // console.log(cx, cy, i);
-        d3.select("#pathTop" + (i - 1)).remove();
-        d3.select("#pathBottom" + (i - 1)).remove();
-        d3.select("#pathNotEqual" + (i - 1)).remove();
-        d3.select(".rectIndexText" + (i - 1))
+        linkedListSVG.select("#pathTop" + (i - 1)).remove();
+        linkedListSVG.select("#pathBottom" + (i - 1)).remove();
+        linkedListSVG.select("#pathNotEqual" + (i - 1)).remove();
+        linkedListSVG.select(".rectIndexText" + (i - 1))
                 .attr("y", linkedListRectIndexAxesGroupOption.groupIndexTextPositionY);
-        d3.select(".rectValueText" + (i - 1))
+        linkedListSVG.select(".rectValueText" + (i - 1))
                 .attr("y", linkedListRectOptions.groupTextPositionY)
                 .attr("fill", "white");
 
         return cb();
       };
       this.moveIndex = function (cx, cy, i, searchIndex, item, cb) {
-        var rectIndexText = d3.select(".rectIndexText" + i);
+        var rectIndexText = linkedListSVG.select(".rectIndexText" + i);
         rectIndexText.transition().duration(movingSpeed.searchIndex)
                 .attr("y", linkedListRectIndexAxesGroupOption.movingToPositionY);
         return cb();
       };
       this.moveValue = function (cx, cy, i, searchIndex, item, cb) {
-        var rectValueText = d3.select(".rectValueText" + i);
+        var rectValueText = linkedListSVG.select(".rectValueText" + i);
         rectValueText.transition().duration(movingSpeed.searchValue)
                 .attr("y", linkedListRectOptions.movingToPositionY)
                 .attr("fill", function (d) {
@@ -1245,13 +1223,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     function ElementsHandler() {
       this.validateElement = function (cx, cy, i, validateElement, item, cb, callback, id) {
-        // console.log(cx, cy, i, validateElement, item, cb, callback);
-        // console.log(cx, cy, i, validateElement, item, cb, callback, id);
-
         if (item !== validateElement) {
-          d3.select("#pathTop" + i)
+          linkedListSVG.select("#pathTop" + i)
                   .style("stroke", "red");
-          d3.select("#pathBottom" + i)
+          linkedListSVG.select("#pathBottom" + i)
                   .style("stroke", "red");
 
           buildNotEqualSign(cx, cy, i);
@@ -1260,17 +1235,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
           this.isNotFound(i, validateElement, id);
         } else {
-          d3.select("#pathTop" + i)
+          linkedListSVG.select("#pathTop" + i)
                   .style("stroke", function () {
                     return colors.getColor(linkedListRectOptions.numbersArray[i]);
                   });
-          d3.select("#pathBottom" + i)
+          linkedListSVG.select("#pathBottom" + i)
                   .style("stroke", function () {
                     return colors.getColor(linkedListRectOptions.numbersArray[i]);
                   })
                   .transition().delay(300)
                   .each("end", function () {
-                    d3.select("#searchElement")
+                    linkedListSVG.select("#searchElement")
                             .style("fill", function () {
                               return colors.getColor(linkedListRectOptions.numbersArray[i]);
                             });
@@ -1284,7 +1259,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
       };
       this.searchIndex = function (cx, cy, i, serchingValue, callback, id) {
-        var searchIndex = Math.floor(d3.select("#rectSearchText").text());
+        var searchIndex = Math.floor(linkedListSVG.select("#rectSearchText").text());
         cy += 150;
 
         var orderSteps = new OrderSteps();
@@ -1304,14 +1279,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         };
       };
       this.searchValue = function (cx, cy, i, serchingValue, callback, id) {
-        var searchValue = Math.floor(d3.select("#rectSearchText").text());
+        var searchValue = Math.floor(linkedListSVG.select("#rectSearchText").text());
         var orderSteps = new OrderSteps();
 
         var requests = orderSteps[id]().reduce(function(promiseChain, item) {
           return promiseChain.then(function() {
             return new Promise(function(resolve) {
-              // if (asyncFunction(item, resolve, id, i, cx, cy, searchIndex, callback, serchingValue)) {console.log(item.step)} else {console.log(item.step)};
-              // if (asyncFunction(item, resolve, id, i, cx, cy, searchValue, callback, serchingValue));
               asyncFunction(item, resolve, id, i, cx, cy, searchValue, callback, serchingValue);
             })
           });
@@ -1319,32 +1292,29 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         function asyncFunction(item, cb, id, i, cx, cy, searchIndex, callback, serchingValue) {
           setTimeout(function() {
-            // console.log(item.step);
             steps[item.step](cx, cy, i, searchIndex, serchingValue, cb, callback, id);
-            // console.log(result);
           }, item.timeout);
         };
       };
       this.isNotFound = function (i, validateElement, id) {
         if(linkedListData.length - 1 == i) {
           elementsHandler.resetElement(i);
-          // console.log(id)
           $("#" + id + "Data").notify(validateElement + " not found", { position:"right" });
         }
       };
       this.resetElement = function (i) {
-        d3.select(".rectValueText" + i)
+        linkedListSVG.select(".rectValueText" + i)
                 .attr("y", linkedListRectOptions.groupTextPositionY)
                 .attr("fill", "white");
 
-        d3.select(".rectIndexText" + i)
+        linkedListSVG.select(".rectIndexText" + i)
                 .attr("y", linkedListRectIndexAxesGroupOption.groupIndexTextPositionY);
 
-        d3.select("#searchElement").remove();
-        d3.select("#rectSearchText").remove();
-        d3.select("#pathTop" + i).remove();
-        d3.select("#pathBottom" + i).remove();
-        d3.select("#pathNotEqual" + i).remove();
+        linkedListSVG.select("#searchElement").remove();
+        linkedListSVG.select("#rectSearchText").remove();
+        linkedListSVG.select("#pathTop" + i).remove();
+        linkedListSVG.select("#pathBottom" + i).remove();
+        linkedListSVG.select("#pathNotEqual" + i).remove();
       };
       this.zoomLinkedList = function () {
         linkedListSVG.attr("transform", "translate(" + d3.event.translate + ")scale("+ d3.event.scale +")");
@@ -1359,6 +1329,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         linkedListSVG = d3.select(this.$.linkedlist).append("svg")
                 .attr("width", "100%")
                 .attr("height", 300)
+                .attr("id", "linkedListSVGContainer")
                 .attr("class", "linkedListRectSvg")
                 .append("g")
                 .attr("transform", "scale(1)")
@@ -1372,10 +1343,66 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 
         addLinkedList();
-//        listeners().init();
       },
       listeners: {
+        'linkedListZoomToggle.tap': 'linkedListZoomToggle',
+        'addFirst.tap': 'addFirst',
+        'addLast.tap': 'addLast',
+        'searchIndex.tap': 'searchIndex',
+        'searchValue.tap': 'searchValue',
+        'removeFirst.tap': 'removeFirst',
+        'removeLast.tap': 'removeLast',
         'regenerateLinkedList.tap': 'regenerateLinkedList'
+      },
+      linkedListZoomToggle: function () {
+        $(this.$.linkedListZoomToggle).change(function() {
+          if(this.checked) {
+            linkedListEnableZoomFeature();
+          } else {
+            linkedListDisableZoomFeature();
+          }
+        });
+      },
+      addFirst: function () {
+        var firstValue = Math.floor($(this.$.addFirstData).val()); //todo: check empty value
+
+        linkedListData.unshift(firstValue);
+
+        updateLinkedList("addFirst");
+
+        $(this.$.addFirstData).val(''); //todo: clear value in input fields?
+      },
+      addLast: function () {
+        var lastValue = Math.floor($(this.$.addLastData).val()); //todo: check empty value
+
+        linkedListData.push(lastValue);
+
+        updateLinkedList("addLast");
+
+        $(this.$.addLastData).val(''); //todo: clear value in input fields?
+      },
+      searchIndex: function () {
+        var indexData = Math.floor($(this.$.searchIndexData).val());
+        if(indexData <= linkedListData.length - 1 && indexData >= 0) {
+          addSearchElement(indexData, "searchIndex");
+          searchElement("searchIndex");
+        } else {
+          $(this.$.searchIndexData).notify(indexData + " not found", { position:"right" });
+        }
+      },
+      searchValue: function () {
+        var valueData = Math.floor($(this.$.searchValueData).val());
+
+        addSearchElement(valueData, "searchValue");
+        searchElement("searchValue");
+      },
+      removeFirst: function () {
+        linkedListData.shift();
+        updateLinkedList("removeFirst");
+      },
+      removeLast: function () {
+        linkedListData.pop();
+        updateLinkedList("removeLast");
       },
       regenerateLinkedList: function () {
 

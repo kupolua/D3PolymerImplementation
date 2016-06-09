@@ -75,6 +75,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <app-drawer>
         <app-toolbar>Menu</app-toolbar>
         <iron-selector selected="[[page]]" attr-for-selected="name" class="drawer-list" role="navigation">
+          <a name="greetings" href="/greetings">Greetings</a>
           <a name="linkedlist" href="/linkedlist">Linked List</a>
         </iron-selector>
       </app-drawer>
@@ -90,6 +91,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </app-header>
 
         <iron-pages role="main" selected="[[page]]" attr-for-selected="name">
+          <clap-greetings name="greetings"></clap-greetings>
           <clap-linkedlist name="linkedlist"></clap-linkedlist>
         </iron-pages>
 
@@ -120,7 +122,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       ],
 
       _routePageChanged: function(page) {
-        this.page = page || 'linkedlist';
+        this.page = page || 'greetings';
       },
 
       _pageChanged: function(page) {
