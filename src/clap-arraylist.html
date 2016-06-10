@@ -1,0 +1,682 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.11/d3.min.js"></script>
+<script src="Colors.js"></script>
+
+<dom-module id="clap-arraylist">
+
+  <template>
+    <style>
+
+    </style>
+
+      <div class="row well">
+          <div class="col-sm-12" id="animatedRects">
+              <div id="arraylist"></div>
+              <div>
+                  <label>
+                      Enable Zoom Feature <input type="checkbox" id="zoomToggle">
+                  </label>
+              </div>
+              <div class="row well">
+                  <form class="form-horizontal">
+                      <div class="form-group">
+                          <label for="arrayLength" class="col-xs-1 col-sm-1 col-md-1 col-lg-1 control-label">Length</label>
+                          <div class="col-xs-3 col-sm-3 col-md-2 col-lg-2">
+                              <input type="number" class="form-control input-sm" min="1" id="arrayLength" placeholder="length">
+                          </div>
+                      </div>
+                      <div id="bounds" class="form-group">
+                          <label for="lowerBound" class="col-xs-1 col-sm-1 col-md-1 col-lg-1 control-label">Bounds</label>
+                          <div class="col-xs-3 col-sm-3 col-md-2 col-lg-2">
+                              <div class="input-group">
+                                  <input type="number" class="form-control input-sm boundField" id="lowerBound" placeholder="from">
+                                  <span class="input-group-btn" style="width:0;"></span>
+                                  <input type="number" class="form-control input-sm boundField" id="upperBound" placeholder="to">
+                              </div>
+                          </div>
+                      </div>
+                      <div class="form-group">
+                          <div class="col-xs-offset-1 col-sm-offset-1 col-sm-10">
+                              <div class="checkbox">
+                                  <label>
+                                      <paper-checkbox id="uniqueCheckbox">Unique Numbers</paper-checkbox>
+                                  </label>
+                              </div>
+                          </div>
+                      </div>
+                      <div class="form-group">
+                          <div class="col-xs-offset-1 col-sm-offset-1 col-sm-10">
+                              <button id="regenerate" type="button" class="btn btn-primary">Regenerate</button>
+                          </div>
+                      </div>
+                  </form>
+              </div>
+              <p></p>
+              <div class="row">
+                  <div class="col-xs-4 col-sm-3 col-md-3 col-lg-2">
+                      <div class="btn-group btn-group-sm" role="group">
+                          <button type="button" id="sortNumbersAsc" class="btn btn-success">Sort Asc</button>
+                          <button type="button" id="sortNumbersDesc" class="btn btn-success">Sort Desc</button>
+                      </div>
+                  </div>
+                  <div class="col-xs-4 col-sm-3 col-md-3 col-lg-2">
+                      <div class="btn-group btn-group-sm pull-right" role="group">
+                          <button type="button" id="showAllData" class="btn btn-success">Show All</button>
+                          <button type="button" id="hideAllData" class="btn btn-success">Hide All</button>
+                      </div>
+                  </div>
+              </div>
+              <p></p>
+              <div>
+                  <form role="form">
+                      <div class="row">
+                          <div class="col-xs-8 col-sm-6 col-md-6 col-lg-4">
+                              <div class="input-group">
+                                <span class="input-group-btn">
+                                    <button id="showDataByIndex" class="btn btn-default btn-sm" type="button">Show by Index</button>
+                                </span>
+                                  <input type="number" min="0" id="indexShow" placeholder="index" class="form-control input-sm">
+                              </div>
+                          </div>
+                      </div>
+                  </form>
+              </div>
+              <p></p>
+              <div>
+                  <form role="form">
+                      <div class="row">
+                          <div class="col-xs-8 col-sm-6 col-md-6 col-lg-4">
+                              <div class="input-group">
+                                <span class="input-group-btn">
+                                    <button id="deleteByIndex" class="btn btn-default btn-sm" type="button">Delete by Index</button>
+                                </span>
+                                  <input type="number" min="0" id="indexDel" placeholder="index" class="form-control input-sm">
+                              </div>
+                          </div>
+                      </div>
+                  </form>
+              </div>
+              <p></p>
+              <form role="form" class="form-inline">
+                  <div class="row">
+                      <div class="col-xs-8 col-sm-6 col-md-6 col-lg-4">
+                          <div class="input-group">
+                            <span class="input-group-btn">
+                                <button type="button" id="changeValueByIndex" class="btn btn-default btn-sm">Add/Update Value by Index</button>
+                            </span>
+                              <input type="number" min="0" id="changeIndexField" class="changeField form-control input-sm" placeholder="index" size="4">
+                              <span class="input-group-btn" style="width:0;"></span>
+                              <input type="number" id="changeValueField" class="changeField form-control input-sm" placeholder="value" size="4">
+                          </div>
+                      </div>
+                  </div>
+              </form>
+          </div>
+      </div>
+  </template>
+
+  <script>
+      var rectOptions = {
+      side: 50,
+      positionX: 60,
+      positionY: 135,
+      groupTextPositionX: 60,
+      groupTextPositionY: 165,
+      intervalX: 25,
+      textIntervalX: 50,
+      numbersArray: []
+  };
+      var circleOptions = {
+          positionY: 150,
+          radius: 20,
+          intervalX: 50,
+          textIntervalX: 50,
+          positionX: 60,
+          textPositionX: 60,
+          circleShowAllEnabled: false
+      };
+      var svgOptions = {
+          width: 640,
+          height: 200,
+          initialArrayLength: 10,
+          initialBounds: {
+              lowerBound: 1,
+              upperBound: 100
+          }
+      };
+      var arrayListSVG;
+      var circleText;
+      var circleGroup;
+      var controls;
+
+      function buildRectsContainer() {
+          arrayListSVG
+                  .attr("transform", "scale("+ getScaleFactor(rectOptions.numbersArray.length) +")");
+
+          function zoom() {
+              arrayListSVG.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+          }
+
+          arrayListSVG.append("rect")
+                .attr("class", "overlayS")
+                .attr("width", svgOptions.width * 5)
+                .attr("height", svgOptions.height * 5)
+                .attr("fill", "#EEEEEE")
+          ;
+
+          circleGroup = arrayListSVG.selectAll("g")
+                  .data(rectOptions.numbersArray)
+                  .enter()
+                  .append("g")
+                  .attr("class", function (d, i) {
+                      return "circleNode" + i;
+                  }).attr("opacity", function (d, i) {
+                      if (d == null) {
+                          return 0;
+                      } else {
+                          return 1;
+                      }
+                  });
+
+          circleGroup.append("circle")
+                  .style("fill", "rgb(170,120,57)")
+                  .attr("class", function (d, i) {
+                      return "circle" + i;
+                  })
+                  .attr("r", circleOptions.radius)
+                  .attr("cx", function (d, i) {
+                      return (i * circleOptions.positionX) + circleOptions.intervalX;
+                  })
+                  .attr("cy", circleOptions.positionY);
+
+          circleText = circleGroup.append("text")
+                  .text(function (d) {
+                      return d;
+                  })
+                  .attr("class", function (d, i) {
+                      return "circleText" + i;
+                  })
+                  .attr("text-anchor", "middle")
+                  .attr("x", function (d, i) {
+                      return (i * circleOptions.textPositionX) + circleOptions.textIntervalX;
+                  })
+                  .attr("y", circleOptions.positionY)
+                  .attr("font-family", "sans-serif")
+                  .attr("font-size", "11px")
+                  .attr("fill", "white")
+                  .attr("fill-opacity", 1);
+
+          var rectGroup = arrayListSVG.selectAll("g.rectNode")
+                  .data(rectOptions.numbersArray)
+                  .enter()
+                  .append("g")
+                  .attr("class", function (d, i) {
+                      return "rectNode" + i;
+                  })
+                  .on("mouseover", function (d, i) {
+                      showCircle(i);
+                  })
+                  .on("mouseout", function (d, i) {
+                      hideCircle(i);
+                  });
+
+          rectGroup.append("rect")
+                  .attr("x", function (d, i) {
+                      return (i * rectOptions.positionX) + rectOptions.intervalX;
+                  })
+                  .attr("y", rectOptions.positionY)
+                  .attr("class", function (d, i) {
+                      return "rect" + i;
+                  })
+                  .attr("rectIndex", function (d, i) {
+                      return i;
+                  })
+                  .attr("fill", "rgb(41,82,109)")
+                  .attr("width", rectOptions.side)
+                  .attr("height", rectOptions.side);
+
+          rectGroup.append("text")
+                  .text(function (d, i) {
+                      return i;
+                  })
+                  .attr("class", function (d, i) {
+                      return "rectText" + i;
+                  })
+                  .attr("text-anchor", "middle")
+                  .attr("x", function (d, i) {
+                      return (i * rectOptions.groupTextPositionX) + rectOptions.textIntervalX;
+                  })
+                  .attr("y", rectOptions.groupTextPositionY)
+                  .attr("font-family", "sans-serif")
+                  .attr("font-size", "13px")
+                  .attr("fill", "white");
+      }
+
+      function enableZoomFeature() {
+
+          arrayListSVG.call(d3.behavior.zoom()
+                  .scaleExtent([0.1, 3])
+                  .on("zoom", zoom));
+
+          function zoom() {
+              arrayListSVG.selectAll("g").attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+          }
+      }
+
+      function disableZoomFeature() {
+          arrayListSVG.call(d3.behavior.zoom()
+                  .on("zoom", null));
+      }
+
+      function showCircle(index) {
+          arrayListSVG.select(".circleNode" + index)
+                  .transition()
+                  .duration(2000)
+                  .ease("elastic")
+                  .call(liftUpCircles);
+      }
+
+      function showAllData() {
+          circleOptions.circleShowAllEnabled = true;
+          circleGroup.transition()
+                  .duration(3000)
+                  .ease("elastic")
+                  .call(liftUpCircles);
+      }
+
+      function hideAllData() {
+          circleOptions.circleShowAllEnabled = false;
+          circleGroup.transition()
+                  .duration(3000)
+                  .ease("elastic")
+                  .call(liftDownCircles);
+      }
+
+      function showDataByIndex(controls) {
+          var indexFieldValue = parseInt(controls.indexShow.value, 10);
+          clearFields(controls);
+          hideAllData();
+
+          arrayListSVG.select(".circleNode" + indexFieldValue)
+                  .transition()
+                  .duration(3000)
+                  .ease("elastic")
+                  .call(liftUpCircles)
+                  .each("end", function () {
+                      hideCircle(indexFieldValue);
+                  });
+      }
+
+      function hideCircle(index) {
+          arrayListSVG.select(".circleNode" + index)
+                  .transition()
+                  .call(liftDownCircles);
+      }
+
+      function regenerate(controls) {
+          arrayListSVG.selectAll("g").remove();
+          rectOptions.numbersArray = [];
+          fillNumbersArray(rectOptions.numbersArray, controls);
+          buildRectsContainer();
+          showAndHideAllCircles();
+      }
+
+      function showAndHideAllCircles() {
+          circleGroup.transition()
+                  .duration(3000)
+                  .ease("elastic")
+                  .call(liftUpCircles)
+                  .transition()
+                  .call(liftDownCircles);
+      }
+
+      function fillNumbersArray(array, controls) {
+          var amount = getAmountOfBuckets(controls);
+          var bounds = getBounds(amount, controls);
+
+          while (array.length < amount) {
+              var randomNumber = Math.floor(Math.random() * (bounds.upperBound - bounds.lowerBound + 1) + bounds.lowerBound);
+              if (controls.uniqueNumbersRequired) {
+                  addUniqueNumber(array, randomNumber);
+              } else {
+                  array.push(randomNumber);
+              }
+          }
+
+          clearFields(controls);
+      }
+
+      function getAmountOfBuckets(controls) {
+          var amount = svgOptions.initialArrayLength;
+          var fieldValue = parseInt(controls.arrayLength.value, 10);
+
+          if (typeof fieldValue === "number" && getNumberSign(fieldValue) == 1 && !isNaN(fieldValue)) {
+              amount = fieldValue;
+          }
+
+          return amount;
+      }
+
+      function getNumberSign(number) {
+          number = +number;
+          if (number === 0 || isNaN(number)) {
+              return number;
+          }
+          return number > 0 ? 1 : -1;
+      }
+
+      function getBounds(amount, controls) {
+          var lowerBoundFieldValue = parseInt(controls.lowerBound.value, 10);
+          var upperBoundFieldValue = parseInt(controls.upperBound.value, 10);
+          $boundsForm = $('#bounds'),
+                  bounds = {
+                      lowerBound: svgOptions.initialBounds.lowerBound,
+                      upperBound: svgOptions.initialBounds.upperBound
+                  };
+
+          if (checkValueForCorrectness(lowerBoundFieldValue) && checkValueForCorrectness(upperBoundFieldValue)) {
+              if (lowerBoundFieldValue > upperBoundFieldValue) {
+                  upperBoundFieldValue = [lowerBoundFieldValue, lowerBoundFieldValue = upperBoundFieldValue][0];
+              }
+
+              var interval = Math.abs(upperBoundFieldValue - lowerBoundFieldValue) + 1;
+
+              if (controls.uniqueNumbersRequired && interval < amount) {
+                  upperBoundFieldValue += amount - interval;
+
+                  $boundsForm.addClass('has-error');
+                  $('#upperBound').notify("Bounds are incorrect and set to " +
+                          "("+ lowerBoundFieldValue +") - ("+ upperBoundFieldValue +")", { position:"right" });
+              } else {
+                  $boundsForm.removeClass('has-error');
+              }
+
+              bounds.lowerBound = lowerBoundFieldValue;
+              bounds.upperBound = upperBoundFieldValue;
+          }
+
+          return bounds;
+      }
+
+      function addUniqueNumber(array, number) {
+          if (checkValueForCorrectness(number) && array.indexOf(number) == -1) {
+              array.push(number);
+          }
+      }
+
+      function sortNumbersAsc() {
+          sortArray(rectOptions.numbersArray, d3.ascending);
+      }
+
+      function sortNumbersDesc() {
+          sortArray(rectOptions.numbersArray, d3.descending);
+      }
+
+      function sortArray(array, order) {
+          array.sort(order);
+
+          showSorting();
+      }
+
+      function showSorting() {
+          circleGroup.transition().duration(1500)
+                  .call(liftUpCircles)
+                  .transition()
+                  .call(fadeOutCircles)
+                  .each("start", function () {
+                      showText("SORT");
+                  })
+                  .each("end", function () {
+                      updateCircleGroupData();
+                      updateCircleTextData();
+                      changeCircleGroupState();
+                  });
+      }
+
+      function liftUpCircles(transition) {
+          transition
+                  .attr("transform", "translate(0, -30)");
+      }
+
+      function fadeOutCircles(transition) {
+          transition
+                  .attr("opacity", "0");
+      }
+
+      function showText(text) {
+          circleGroup.selectAll("text")
+                  .transition().duration(2000)
+                  .text(text);
+      }
+
+      function changeCircleGroupState() {
+          circleGroup.transition().duration(2000)
+                  .call(changeCircleOpacityDependingOnTheData)
+                  .each("end", function () {
+                      if (!circleOptions.circleShowAllEnabled) {
+                          circleGroup.transition().duration(2000)
+                                  .call(liftDownCircles);
+                      }
+                  });
+      }
+
+      function changeCircleOpacityDependingOnTheData(transition) {
+          transition
+                  .attr("opacity", function (d) {
+                      if (d == null) {
+                          return 0;
+                      } else {
+                          return 1;
+                      }
+                  })
+      }
+
+      function liftDownCircles(transition) {
+          transition
+                  .attr("transform", "translate(0, 0)");
+      }
+
+      function updateCircleTextData() {
+          circleText.data(rectOptions.numbersArray).exit().remove();
+          circleText.data(rectOptions.numbersArray)
+                  .text(function (d) {
+                      return d;
+                  });
+      }
+
+      function updateCircleGroupData() {
+          circleGroup.data(rectOptions.numbersArray).exit().remove();
+          circleGroup.data(rectOptions.numbersArray);
+      }
+
+      function deleteByIndex(controls) {
+          var amountOfIndexes = rectOptions.numbersArray.length - 1;
+          var indexValue = controls.indexDel.value;
+          indexValue = parseInt(indexValue, 10);
+
+          clearFields(controls);
+
+          if (checkIndexForCorrectness(indexValue, amountOfIndexes)) {
+              var circle = arrayListSVG.select(".circleNode" + indexValue)
+                      .transition().duration(1000)
+                      .call(liftUpCircles)
+                      .each("end", function () {
+                          circle.select("text")
+                                  .transition().duration(1000)
+                                  .text("DEL")
+                                  .transition()
+                                  .text(null);
+
+                          arrayListSVG.select(".circleNode" + indexValue)
+                                  .transition().duration(1000)
+                                  .attr("opacity", "0");
+
+                          rectOptions.numbersArray[indexValue] = null;
+                      });
+          }
+      }
+
+      function changeValueByIndex(controls) {
+          var amountOfIndexes = rectOptions.numbersArray.length - 1;
+          var fieldIndex = controls.changeIndexField.value;
+          var fieldValue = controls.changeValueField.value;
+          fieldIndex = parseInt(fieldIndex, 10);
+          fieldValue = parseInt(fieldValue, 10);
+
+          clearFields(controls);
+
+          if ((checkIndexForCorrectness(fieldIndex, amountOfIndexes)) && checkValueForCorrectness(fieldValue)) {
+              showValueChanging(fieldIndex, fieldValue);
+          }
+      }
+
+      function showValueChanging(fieldIndex, fieldValue) {
+          arrayListSVG.select(".circleNode" + fieldIndex)
+                  .transition().duration(1000)
+                  .call(liftUpAndChangeOpacity)
+                  .select("text")
+                  .transition()
+                  .text("CHANGE")
+                  .attr("fill-opacity", 0)
+                  .each("end", function () {
+                      rectOptions.numbersArray[fieldIndex] = fieldValue;
+                      updateCircleTextData();
+                  })
+                  .transition()
+                  .attr("fill-opacity", 1)
+                  .each("end", function () {
+                      if (!circleOptions.circleShowAllEnabled) {
+                          placeCircleIntoBox(fieldIndex);
+                      }
+                  });
+      }
+
+      function liftUpAndChangeOpacity(transition) {
+          transition
+                  .attr("opacity", function () {
+                      var circleOpacity = d3.select(this).attr("opacity");
+                      if (circleOpacity == 0) {
+                          return 1;
+                      } else {
+                          return circleOpacity;
+                      }
+                  })
+                  .attr("transform", "translate(0, -30)")
+      }
+
+      function placeCircleIntoBox(fieldIndex) {
+          arrayListSVG.select(".circleNode" + fieldIndex)
+                  .transition().duration(1000)
+                  .call(liftDownCircles);
+      }
+
+      function clearFields(controls) {
+          controls.changeIndexField.value = "";
+          controls.changeValueField.value = "";
+          controls.indexDel.value = "";
+          controls.indexShow.value = "";
+      }
+
+      function checkIndexForCorrectness(index, amountOfIndexes) {
+          return !!(typeof index === "number" && index <= amountOfIndexes && getNumberSign(index) != -1);
+      }
+
+      function checkValueForCorrectness(value) {
+          return !!(typeof value === "number" && !isNaN(value));
+      }
+
+      function getScaleFactor(numbersArrayLength) {
+          var scaleFactor = svgOptions.initialArrayLength / numbersArrayLength;
+          return scaleFactor > 1 ? 1 : scaleFactor;
+      }
+
+    Polymer({
+          is: "clap-arraylist",
+          ready: function() {
+            this.scopeSubtree(this.$.arraylist, true);
+
+              controls = {
+                  uniqueNumbersRequired: this.$.uniqueCheckbox.checked,
+                  arrayLength: this.$.arrayLength,
+                  lowerBound: this.$.lowerBound,
+                  upperBound: this.$.upperBound,
+                  changeIndexField: this.$.changeIndexField,
+                  changeValueField: this.$.changeValueField,
+                  indexDel: this.$.indexDel,
+                  indexShow: this.$.indexShow
+              };
+
+            arrayListSVG = d3.select(this.$.arraylist).append("svg")
+                        .attr("width", "100%")
+                        .attr("height", svgOptions.height)
+                        .attr("class", "rectSvg")
+                        .style("background-color", "#DFDFDF");
+        
+            fillNumbersArray(rectOptions.numbersArray, controls);
+            buildRectsContainer();
+          },
+        listeners: {
+            'zoomToggle.tap': 'zoomToggle',
+            'regenerate.tap': 'regenerate',
+            'sortNumbersAsc.tap': 'sortNumbersAsc',
+            'sortNumbersDesc.tap': 'sortNumbersDesc',
+            'showAllData.tap': 'showAllData',
+            'hideAllData.tap': 'hideAllData',
+            'showDataByIndex.tap': 'showDataByIndex',
+            'deleteByIndex.tap': 'deleteByIndex',
+            'changeValueByIndex.tap': 'changeValueByIndex'
+        },
+        zoomToggle: function () {
+            $(this.$.zoomToggle).change(function() {
+                if(this.checked) {
+                    enableZoomFeature();
+                } else {
+                    disableZoomFeature();
+                }
+            });
+        },
+        regenerate: function () {
+
+            controls.uniqueNumbersRequired = this.$.uniqueCheckbox.checked;
+            controls.arrayLength = this.$.arrayLength;
+            controls.lowerBound = this.$.lowerBound;
+            controls.upperBound = this.$.upperBound;
+
+            regenerate(controls);
+        },
+        sortNumbersAsc: function () {
+            sortNumbersAsc();
+        },
+        sortNumbersDesc: function () {
+            sortNumbersDesc();
+        },
+        showAllData: function () {
+            showAllData()
+        },
+        hideAllData: function () {
+            hideAllData()
+        },
+        showDataByIndex: function () {
+            showDataByIndex(controls);
+        },
+        deleteByIndex: function () {
+            deleteByIndex(controls);
+        },
+        changeValueByIndex: function () {
+            changeValueByIndex(controls);
+        }
+    })
+  </script>
+
+</dom-module>
