@@ -159,6 +159,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       var circleText;
       var circleGroup;
       var controls;
+      var resizer = new Resizer();
 
       function buildRectsContainer() {
           arrayListSVG
@@ -601,7 +602,26 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           return scaleFactor > 1 ? 1 : scaleFactor;
       }
 
-    Polymer({
+      function Resizer() {
+          var resizeLinkedList = function () {
+              var elementWidth = rectOptions.side;
+              var elementInterval = (rectOptions.positionX / 2);
+              var arrayListWidth = (elementWidth + elementInterval) * rectOptions.numbersArray.length;
+              var arrayListScaleFactor = window.innerWidth < arrayListWidth ? window.innerWidth / arrayListWidth : 1;
+              console.log(arrayListWidth, arrayListScaleFactor);
+
+              arrayListSVG.selectAll("g").attr("transform", "translate(1)scale(" + arrayListScaleFactor + ")");
+          };
+
+          return {
+              resize: function () {
+                  resizeLinkedList();
+              }
+          }
+      }
+
+
+      Polymer({
           is: "clap-arraylist",
           ready: function() {
             this.scopeSubtree(this.$.arraylist, true);
@@ -625,6 +645,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         
             fillNumbersArray(rectOptions.numbersArray, controls);
             buildRectsContainer();
+            resizer.resize();
           },
         listeners: {
             'zoomToggle.tap': 'zoomToggle',

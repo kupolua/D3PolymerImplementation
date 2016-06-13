@@ -9,6 +9,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="../bower_components/polymer/polymer.html">
+<!--<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">-->
+<!--<link rel="import" href="../bower_components/iron-pages/iron-pages.html">-->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.11/d3.min.js"></script>
 <script src="Colors.js"></script>
@@ -19,7 +21,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <style>
 
     </style>
-
+    <div id="deviceResolution"></div>
     <div id="linkedlist"></div>
     <div>
       <label>
@@ -221,6 +223,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     };
     var colors = new Colors();
     var steps = new Steps();
+    var resizer = new Resizer();
     var searchElementOptions = new SearchElementOptions();
     var elementsHandler = new ElementsHandler();
     var moveElement = new MoveElement();
@@ -1213,11 +1216,28 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       };
     }
 
+    function Resizer() {
+        var resizeLinkedList = function () {
+            var elementWidth = linkedListRectPrevOptions.width + linkedListRectOptions.side + linkedListRectNextOptions.width;
+            var elementInterval = (linkedListRectOptions.positionX / 2);
+            var linkedListWidth = (elementWidth + elementInterval) * linkedListData.length;
+            var linkedListScaleFactor = window.innerWidth < linkedListWidth ? window.innerWidth / linkedListWidth : 1;
+
+            linkedListSVG.attr("transform", "translate(1)scale(" + linkedListScaleFactor + ")");
+        };
+
+        return {
+            resize: function () {
+                resizeLinkedList();
+            }
+        }
+    }
+
     Polymer({
       is: "clap-linkedlist",
       ready: function() {
         this.scopeSubtree(this.$.linkedlist, true);
-
+          console.log(window.innerWidth, window.innerHeight);
         linkedListSVG = d3.select(this.$.linkedlist).append("svg")
                 .attr("width", "100%")
                 .attr("height", 300)
@@ -1232,9 +1252,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 .attr("height", "100%")
                 .attr("fill", "none");
 
-
-
         addLinkedList();
+        resizer.resize();
       },
       listeners: {
         'linkedListZoomToggle.tap': 'linkedListZoomToggle',
