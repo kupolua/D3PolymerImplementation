@@ -1,0 +1,1368 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
+<!--<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">-->
+<!--<link rel="import" href="../bower_components/iron-pages/iron-pages.html">-->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.11/d3.min.js"></script>
+<!--<script src="chart.js"></script>-->
+<script src="Colors.js"></script>
+
+<dom-module id="complexity-chart">
+  <template>
+    <style>
+
+    </style>
+    <div id="chartContainer">HI</div>
+  </template>
+
+  <script>
+      var svg;
+      var chartVars = {};
+      var charts = (function() {
+          var chartsData = {};
+          var chartProperties = function(chartID, chartScale, testCallback) {
+              var chartSettings = {
+                  minX: 0,
+                  minY: 0,
+                  zoomDivider: chartScale < 1000 ? chartScale : 1000,
+                  maxScale: chartScale ? chartScale : 1000
+              };
+              var chartData = {
+                  "id": chartID,
+                  amountOfElements: chartSettings.maxScale / 2,
+                  executionTime: 10,
+                  height: 360,
+                  width: 536,
+                  margin : {
+                      top: 0,
+                      right: 40,
+                      bottom: 80,
+                      left: 144
+                  }
+              };
+
+              if (testCallback) {
+                  $.extend(chartData, testCallback);
+              } else {
+                  $.extend(chartData, getChartProperties(chartID, chartSettings));
+              }
+
+              return chartData;
+          };
+          var getChartProperties = function(chartID, chartSettings) {
+              var chartProperties = {
+                  axisScale: getScale(function (maxScale) {
+                      return calculateComplexity(chartID, maxScale);
+                  }),
+                  coordinates: getCoordinates(function (i) {
+                      return calculateComplexity(chartID, i);
+                  })
+              };
+
+              function getScale(callback) {
+                  var axisScales = {
+                      "minX": chartSettings.minX,
+                      "maxX": chartSettings.maxScale,
+                      "minY": chartSettings.minY,
+                      "maxY": callback(chartSettings.maxScale),
+                      "unitInterval": parseInt(chartSettings.maxScale / chartSettings.zoomDivider)
+                  };
+
+                  return axisScales;
+              }
+
+              function getCoordinates(callback) {
+                  var coordinates = [{"coordinateY": chartSettings.minY, "coordinateX": chartSettings.minX}];
+                  var unitInterval = parseInt(chartSettings.maxScale / chartSettings.zoomDivider);
+                  var maxCoordinate = parseInt(chartSettings.maxScale / unitInterval);
+
+                  for(var i = 1; i <= maxCoordinate; i++) {
+                      coordinates[i] = {
+                          "coordinateY": callback ? callback(i * unitInterval) : (i * unitInterval),
+                          "coordinateX": i * unitInterval
+                      };
+                  }
+
+                  return coordinates;
+              }
+
+              return chartProperties;
+          };
+          var calculateComplexity = function(chartID, number) {
+              var complexity = {
+                  n: function(i) {
+                      return i;
+                  },
+                  logn: function (i) {
+                      return Math.log(i);
+                  },
+                  nlogn: function (i) {
+                      return i * Math.log(i);
+                  },
+                  n2: function (i) {
+                      return Math.pow(i, 2);
+                  },
+                  n3: function (i) {
+                      return Math.pow(i, 3);
+                  }
+              };
+
+              return complexity[chartID](number);
+          };
+
+          var generateChartHtmlElements = function (chartID) {
+              var mainContainer = $('<div/>', {
+                  'id': chartID,
+                  'class': 'mainContainer row col-sm-12'
+              }).appendTo('#lecture');
+
+              $('<h1/>', {
+                  'html':'O(' + chartID + ")"
+              }).appendTo(mainContainer);
+
+              $('<p/>').appendTo(mainContainer);
+
+              var formRow = $('<div/>', {
+                  'class':'row'
+              }).appendTo(mainContainer);
+
+              var leftForm = $('<form/>', {
+                  'class': 'form-horizontal col-xs-6 col-sm-6 col-md-6 col-lg-6'
+              }).appendTo(formRow);
+
+              var scaleFormGroup = $('<div/>', {
+                  'class': 'form-group scaleGroup'
+              }).appendTo(leftForm);
+              $('<div/>', {
+                  'class': 'col-xs-12 col-sm-12 col-md-5 control-label',
+                  'html': "<b>Scale</b>"
+              }).appendTo(scaleFormGroup);
+              $('<div/>', {
+                  'class': 'col-xs-8 col-sm-12 col-md-7 col-lg-6',
+                  'html': "<input type=\"number\" class=\"form-control input-sm graphInputField limits\" min=\"1\">"
+              }).appendTo(scaleFormGroup);
+
+              var amountFormGroup = $('<div/>', {
+                  'class': 'form-group amountGroup'
+              }).appendTo(leftForm);
+              $('<div/>', {
+                  'class': 'col-xs-12 col-sm-12 col-md-5 control-label',
+                  'html': "<b>Amount Of Elements (N)</b>"
+              }).appendTo(amountFormGroup);
+              $('<div/>', {
+                  'class': 'col-xs-8 col-sm-12 col-md-7 col-lg-6',
+                  'html': "<input type=\"number\" class=\"form-control input-sm graphInputField request\" min=\"1\">"
+              }).appendTo(amountFormGroup);
+
+              var buttonsFormGroup = $('<div/>', {
+                  'class': 'form-group'
+              }).appendTo(leftForm);
+              $('<div/>', {
+                  'class': 'col-xs-offset-0 col-md-offset-5 col-xs-4 col-sm-6 col-md-3 col-lg-2',
+                  'html': "<button type=\"button\" class=\"btn btn-primary showButton\">Show</button>"
+              }).appendTo(buttonsFormGroup);
+              $('<div/>', {
+                  'class': 'col-xs-offset-0 col-md-offset-1 col-lg-offset-2 col-xs-4 col-sm-6 col-md-3 col-lg-2',
+                  'html': "<button type=\"button\" class=\"btn btn-danger pull-right resetButton\">Reset</button>"
+              }).appendTo(buttonsFormGroup);
+
+              var rightForm = $('<form/>', {
+                  'class': 'form-horizontal col-xs-6 col-sm-6 col-md-6 col-lg-6'
+              }).appendTo(formRow);
+
+              var timeFormGroup = $('<div/>', {
+                  'class': 'form-group'
+              }).appendTo(rightForm);
+              $('<div/>', {
+                  'class': 'col-xs-12 col-sm-12 col-md-6 control-label small',
+                  'html': "<b style='color: #aaaaaa'>Execution time (per operation)</b>"
+              }).appendTo(timeFormGroup);
+
+              var timeFieldColumn = $('<div/>', {
+                  'class': 'col-sm-offset-4 col-md-offset-0 col-xs-8 col-sm-8 col-md-6 col-lg-6'
+              }).appendTo(timeFormGroup);
+
+              var timeInputGroup = $('<div/>', {
+                  'class': 'input-group'
+              }).appendTo(timeFieldColumn);
+              $('<input/>', {
+                  'type': 'number',
+                  'class': 'form-control input-sm graphInputField executionTime',
+                  'min': '1'
+              }).appendTo(timeInputGroup);
+              $('<span/>', {
+                  'style': 'width:0;',
+                  'class': 'input-group-btn'
+              }).appendTo(timeInputGroup);
+
+              var selectElement = $('<select/>', {
+                  'class': 'form-control input-sm timeUnit'
+              }).appendTo(timeInputGroup);
+
+              addOptionsToSelectElement();
+
+              function addOptionsToSelectElement() {
+                  var timeUnits = ['ms', 'sec', 'min', 'hour', 'day']; //todo: bind this with the time calculation object
+
+                  $.each(timeUnits, function (i, el) {
+                      selectElement.append("<option>" + el + "</option>");
+                  })
+              }
+
+              var switcherFormGroup = $('<div/>', {
+                  'class': 'form-group'
+              }).appendTo(rightForm);
+              $('<div/>', {
+                  'class': 'col-xs-12 col-sm-12 col-md-6 control-label small',
+                  'html': "<b style='color: #aaaaaa'>Proportional Coordinates</b>"
+              }).appendTo(switcherFormGroup);
+              $('<div/>', {
+                  'class': 'col-sm-offset-8 col-md-offset-0 col-xs-4 col-sm-4 col-md-4 col-lg-6',
+                  'html': "<input type=\"checkbox\">"
+              }).appendTo(switcherFormGroup);
+
+              var chartRow = $('<div/>', {
+                  'class':'row'
+              }).appendTo(mainContainer);
+              $('<div/>', {
+                  'class': 'graph'
+              }).appendTo(chartRow);
+
+              var tableRow = $('<div/>', {
+                  'class':'row'
+              }).appendTo(mainContainer);
+
+              var tableDiv = $('<div/>', {
+                  'class':'col-xs-offset-1 col-sm-offset-1 col-md-offset-1 col-lg-offset-1 col-xs-10 col-sm-10 col-md-10 col-lg-10'
+              }).appendTo(tableRow);
+              $('<table/>', {
+                  'class': 'table table-striped table-bordered table-condensed graphDataTable',
+                  'cellspacing': '0',
+                  'width': "100%"
+              }).appendTo(tableDiv);
+
+              $('<p/>').appendTo(mainContainer);
+          };
+          var calculateChartData = function(chartID) {
+              chartsData[chartID] = chartProperties(chartID);
+              var chart = chartsData[chartID];
+              chart.dotCoordinates = {
+                  "cx": 0,
+                  "cy": 0
+              };
+              chart.polygons = {
+                  "xPolygon": [],
+                  "yPolygon": [],
+                  "xPolygons": [],
+                  "yPolygons": [],
+                  "amountPolygons": -1
+              };
+              chart.elementsData = {};
+          };
+          var constructGraph = function(chart) {
+//              var chartId = chart.id;
+//              var currentChart = $("#" + chartId);
+
+              chartVars.x = d3.scale.linear()
+                      .range([0, chart.width]);
+
+              chartVars.y = d3.scale.linear()
+                      .range([chart.height, 0]);
+
+              chartVars.xAxis = d3.svg.axis()
+                      .scale(chartVars.x)
+                      .orient("bottom");
+
+              chartVars.yAxis = d3.svg.axis()
+                      .scale(chartVars.y)
+                      .orient("left");
+
+              setInputDomain(chart);
+
+              chartVars.line = d3.svg.line()
+                      .interpolate("linear")
+                      .x(function(d) {
+                          return chartVars.x(parseFloat(d.coordinateX));
+                      })
+                      .y(function(d) {
+                          return chartVars.y(parseFloat(d.coordinateY));
+                      });
+
+              console.log(chartVars);
+              svg.attr("width", chart.width + chart.margin.left)
+                 .attr("height", chart.height + chart.margin.top + chart.margin.bottom);
+
+              var focus=svg.append("g")
+                      .attr("transform", "translate(" + chart.margin.left + "," + chart.margin.top + ")");
+
+              focus.append("g")
+                      .attr("class", "x axis")
+                      .attr("transform", "translate(0," + chart.height + ")")
+                      .call(chartVars.xAxis);
+
+              focus.append("g")
+                      .append("text")
+                      .attr("class", "xAxisLabel")
+                      .attr("x", chart.width - 2)
+                      .attr("y", chart.height - 12)
+                      .attr("dy", ".71em")
+                      .style("text-anchor", "end")
+                      .style("font-size", "14px")
+                      .text("N");
+
+              focus.append("g")
+                      .attr("class", "y axis")
+                      .call(chartVars.yAxis);
+
+              focus.append("g").append("text")
+                      .attr("class", "yAxisLabel")
+                      .attr("transform", "rotate(-90)")
+                      .attr("y", 6)
+                      .attr("dy", ".71em")
+                      .style("text-anchor", "end")
+                      .style("font-size", "14px")
+                      .text("O(" + chart.id + ")");
+          };
+          var updateChart = function(chart) {
+              var currentChart = $("#" + chart.id);
+
+              var focus = d3.select(currentChart.find("svg").get(0)).select("g");
+
+              setInputDomain(chart);
+
+              focus.select(".x.axis")
+                      .call(chartVars.xAxis)
+                      .selectAll("text")
+                      .attr("transform", "translate(-16,0) rotate(-10)");
+
+              focus.select(".x.axis")
+                      .call(chartVars.xAxis)
+                      .select("text")
+                      .text("");
+
+              focus.select(".y.axis")
+                      .call(chartVars.yAxis)
+                      .selectAll("text")
+                      .attr("transform", "translate(0,5)");
+
+              focus.select(".y.axis")
+                      .call(chartVars.yAxis)
+                      .select("text")
+                      .attr("transform", "translate(0,13)");
+
+
+              focus.select(".fund").remove();
+
+              var fund = focus.selectAll(".fund")
+                      .data([chart])
+                      .enter()
+                      .append("g")
+                      .attr("class", "fund")
+                      .attr("algorithm", chart.id);
+
+              fund.append("path")
+                      .attr("class", "line")
+                      .attr("clip-path", "url(#clip)")
+                      .attr("d", function(d) {
+                          return chartVars.line(d.coordinates);
+                      })
+                      .style("stroke", function(d) { return colors(d.id-1); });
+
+              fund.append("circle")
+                      .attr("class", "dotByCursor")
+                      .style("display", "none");
+
+              fund.append("line")
+                      .attr("class", "guideX")
+                      .style("display", "none");
+
+              fund.append("line")
+                      .attr("class", "guideY")
+                      .style("display", "none");
+
+              return fund;
+          };
+          var setInputDomain = function(chart) {
+              chartVars.x.domain([chart.axisScale.minX, chart.axisScale.maxX]);
+              chartVars.y.domain([chart.axisScale.minY, chart.axisScale.maxY]);
+          };
+
+          return {
+              setChartProperties: function(chartID, chartScale, testCallback) {
+                  return chartProperties(chartID, chartScale, testCallback);
+              },
+              addChart: function(chartID) {
+//                  generateChartHtmlElements(chartID);
+                  calculateChartData(chartID);
+                  constructGraph(chartsData[chartID]);
+                  updateChart(chartsData[chartID]);
+//                  handlers.installer(chartsData[chartID]);
+
+              },
+              getProperties: function() {
+                  return getChartProperties;
+              },
+              getChart: function(chartID) {
+                  return chartsData[chartID];
+              },
+              getCalculateComplexity: function(chartID, number) {
+                  return calculateComplexity(chartID, number);
+              },
+              init: function(chartID) {
+                  charts.addChart(chartID);
+              },
+              update: function(chart) {
+                  return updateChart(chart);
+              }
+          }
+      }());
+      var table = (function() {
+          var createTables = function (tableElements) {
+              tableElements.DataTable( {
+                  columns: [
+                      { title: "N", "width": "10%" },
+                      { title: "O", "width": "10%" },
+                      { title: "Execute Time" }
+                  ],
+                  "paging": false,
+                  "searching": false,
+                  "info": false,
+                  "ordering": false,
+                  "scrollY": "95px",
+                  "scrollX": true,
+                  "scrollCollapse": true
+              } );
+          };
+          var initializeAllTables = function() {
+              var chartDataTablesElements = $(".graphDataTable");
+
+              createTables(chartDataTablesElements);
+          };
+          var initializeTableBy = function(chartID) {
+              var chartDataTableElement = $("#" + chartID).find(".graphDataTable");
+
+              createTables(chartDataTableElement);
+          };
+
+          return {
+              init: function() {
+                  initializeAllTables();
+              },
+              initTable: function(chartID) {
+                  initializeTableBy(chartID);
+              }
+          }
+      }());
+      var listeners = (function() {
+          var graphInputFields = function() {
+              var nValueInputFields = $('.graphInputField');
+
+              nValueInputFields.keypress(function (event) {
+                  if (event.keyCode == 13) {
+                      event.preventDefault();
+                      var chartID = getChartID(event);
+                      handlers.showResult(chartID);
+                  }
+              });
+          };
+          var showButtons = function() {
+              var showButtons = $('.showButton');
+
+              showButtons.click(function (event) {
+                  var chartID = getChartID(event);
+                  handlers.showResult(chartID);
+              });
+          };
+          var resetButtons = function() {
+              var clearButtons = $('.resetButton');
+
+              clearButtons.click(function (event) {
+                  var chartID = getChartID(event);
+                  handlers.cleaner(chartID);
+                  charts.addChart(chartID);
+              });
+          };
+          var chartEvents = function(){
+              var graphContainers = $('.graph');
+
+              graphContainers.click(function (event) {
+                  var chartID = getChartID(event);
+                  var chart = charts.getChart(chartID);
+                  handlers.mouseClick(chart);
+              });
+
+              graphContainers.mousemove(function (event) {
+                  var chartID = getChartID(event);
+                  var chart = charts.getChart(chartID);
+                  chart.elementsData = charts.update(chart);
+
+                  handlers.mouseOverGraph(event, chart);
+              });
+
+              graphContainers.mouseout(function (event) {
+                  var chartID = getChartID(event);
+                  var chart = charts.getChart(chartID);
+                  handlers.mouseOutGraph(chart);
+              });
+          };
+          var getChartID = function(event) {
+              return $(event.currentTarget).closest(".mainContainer").attr('id');
+          };
+          var timeUnitsDropdownMenus = function() {
+              var timeUnitsDropdownMenus = $('.timeUnit');
+
+              timeUnitsDropdownMenus.on('change', function (event) {
+                  var chartID = getChartID(event);
+                  handlers.timeUnitChange(charts.getChart(chartID));
+              });
+          };
+
+          return {
+              add: function() {
+                  graphInputFields();
+                  showButtons();
+                  resetButtons();
+                  chartEvents();
+                  timeUnitsDropdownMenus();
+              }
+          }
+      }());
+      var handlers = (function() {
+          var setPlaceholders = function(chart) {
+              var $currentChart = $("#" + chart.id);
+
+              var $scaleField = $currentChart.find(".limits");
+              $scaleField.attr("placeholder", chart.axisScale.maxX);
+
+              var $amountOfElementsField = $currentChart.find(".request");
+              $amountOfElementsField.attr("placeholder", chart.amountOfElements);
+
+              var $execTimeField = $currentChart.find(".executionTime");
+              $execTimeField.attr("placeholder", chart.executionTime);
+
+          };
+          var setAmountOfElements = function(chart) {
+              var $currentChart = $("#" + chart.id);
+              var chartAmountOfElements = $currentChart.find(".request").attr('placeholder');
+              chart.elementsData = charts.update(chart);
+              managers.buildDot(undefined, chartAmountOfElements, chart);
+              managers.buildSinglePolygon(chart);
+              managers.buildPolygons(chart);
+              managers.buildRedDots(chart);
+              managers.buildGuides(chart);
+          };
+          var configureScaleSwitcher = function(chart) {
+              var currentChart = $("#" + chart.id);
+              var proportionSwitcher = currentChart.find("input[type=checkbox]");
+              proportionSwitcher.bootstrapSwitch(
+                      {
+                          size: "small",
+                          state: false,
+                          onColor: "success"
+                      });
+
+              setupScaleSwitcherBehavior(chart, proportionSwitcher);
+
+              function setupScaleSwitcherBehavior(chart, switcher) {
+                  switcher.on('switchChange.bootstrapSwitch', function (event, state) {
+                      var currentChartElements = charts.getChart(chart.id);
+
+                      if (state == true) {
+                          chart.axisScale.maxY = chart.axisScale.maxX;
+
+                          rebuildPolyAndDots();
+                      }
+                      if (state == false) {
+                          var currentChart = $("#" + chart.id);
+                          var chartScale = currentChart.find(".limits").val();
+                          $.extend(charts.getChart(chart.id), charts.setChartProperties(chart.id, chartScale.length > 0 ? chartScale : undefined));
+
+                          rebuildPolyAndDots();
+                      }
+
+                      function rebuildPolyAndDots() {
+                          currentChartElements.elementsData = charts.update(chart);
+
+                          managers.buildSinglePolygon(chart);
+                          managers.buildPolygons(chart);
+                          managers.buildRedDots(chart);
+                      }
+                  });
+              }
+          };
+
+          var removeErrorStateFromInputGroup = function($inputGroup) {
+              $inputGroup.removeClass('has-error');
+          };
+
+          var addErrorStateToInputGroup = function ($inputGroup) {
+              $inputGroup.addClass('has-error');
+          };
+
+          var resetChart = function(chartID) {
+              var $currentChart = $("#" + chartID);
+              var $inputGroup = $currentChart.find(".amountGroup, .scaleGroup");
+
+              $currentChart.find(".graphInputField").val("");
+              $currentChart.find(".oResult, .executeTimeResult").html("");
+              $currentChart.find("select>option:eq(1)").prop('selected', true);
+
+              removeErrorStateFromInputGroup($inputGroup);
+              removeChartSvg();
+              removeChartTable();
+
+              function removeChartSvg() {
+                  var currentSvg = $currentChart.find("svg").get(0);
+
+                  d3.select(currentSvg).remove();
+              }
+
+              function removeChartTable() {
+                  var currentTable = $currentChart.find(".graphDataTable");
+
+                  currentTable.DataTable()
+                          .clear()
+                          .destroy();
+              }
+
+              table.initTable(chartID);
+          };
+          var handleMouseClick = function(chart) {
+              managers.holdGuides(chart);
+              managers.buildPolygons(chart);
+              managers.buildRedDots(chart);
+              managers.buildDotsTable(chart);
+          };
+          var handleMouseOverGraph = function(event, chart) {
+              var requestedByMouse = true;
+              var position = $("." + event.currentTarget.className).offset();
+              var mouseX = event.pageX - chart.margin.left - position.left;
+              if (mouseX > 0 && parseInt(chartVars.x.invert(mouseX)) < chart.axisScale.maxX) {
+                  managers.buildDot(requestedByMouse, mouseX, chart);
+                  managers.buildSinglePolygon(chart);
+                  managers.buildPolygons(chart);
+                  managers.buildRedDots(chart);
+                  managers.buildGuides(chart);
+              } else {
+                  managers.buildPolygons(chart);
+                  managers.buildRedDots(chart);
+              }
+          };
+          var handleMouseOutGraph = function(chart) {
+              var currentChart = $("#" + chart.id);
+              var hidingElements = currentChart.find(".dotByCursor, .guideX, .guideY");
+
+              hidingElements.css("display", "none");
+          };
+          var handleShowResult = function(chartID) {
+              var $currentChart = $("#" + chartID);
+              var $scaleFormGroup = $currentChart.find(".scaleGroup");
+              var $amountFormGroup = $currentChart.find(".amountGroup");
+              var $chartScaleField = $currentChart.find(".limits"); //todo: limits->scale CLAP-119 rename id's and classes of elements where needed
+              var $chartAmountField = $currentChart.find(".request");//todo: request->amount CLAP-119 rename id's and classes of elements where needed
+              var chartScaleValue = $chartScaleField.val() ? parseInt($chartScaleField.val()) : parseInt($chartScaleField.attr('placeholder'));
+              var chartAmountValue = $chartAmountField.val() ? parseInt($chartAmountField.val()) : parseInt($chartAmountField.attr('placeholder'));
+              var currentChartData = charts.getChart(chartID);
+
+              if (!isScaleFieldValidData(chartScaleValue)) {
+                  addErrorStateToInputGroup($scaleFormGroup);
+
+                  $currentChart
+                          .find(".limits")
+                          .notify("Enter a value between 1 and 18446744073709550499", {position: "right"});
+              } else if (!isAmountFieldValidData(chartAmountValue, currentChartData)) {
+                  addErrorStateToInputGroup($amountFormGroup);
+
+                  $currentChart
+                          .find(".request")
+                          .notify("Value is greater than the scale", {position: "right"});
+              } else {
+                  $.extend(currentChartData, charts.setChartProperties(chartID, chartScaleValue));
+                  currentChartData.elementsData = charts.update(currentChartData);
+                  addNewDot();
+                  removeErrorStateFromInputGroup($scaleFormGroup.add($amountFormGroup));
+              }
+
+              function isScaleFieldValidData(checkedValue) {
+                  return !!(checkedValue > 0 && checkedValue < Math.pow(2, 64));
+              }
+
+              function isAmountFieldValidData(checkedValue, chart) {
+                  return !!(checkedValue > 0 && checkedValue < chart.axisScale.maxX);
+              }
+
+
+              function addNewDot() {
+                  var requestedByMouse = false;
+
+                  if(managers.maxScaleIsNotExceeded(requestedByMouse, chartAmountValue, currentChartData)) {
+                      managers.buildDot(requestedByMouse, chartAmountValue, currentChartData);
+                      managers.buildSinglePolygon(currentChartData);
+                      managers.buildPolygons(currentChartData);
+                      managers.buildGuides(currentChartData);
+                      managers.holdGuides(currentChartData);
+                      managers.buildRedDots(currentChartData);
+                      managers.buildDotsTable(currentChartData);
+                  }
+              }
+          };
+          var handleTimeUnitChange = function(chart) {
+              recalculateDataTable(chart);
+
+              function recalculateDataTable(chart) {
+                  var newData = [];
+
+                  if (chart.polygons.xPolygon.length > 0) {
+                      for (var i = 0; i < chart.polygons.xPolygon.length; i++) {
+                          var dataO = chart.polygons.xPolygon[i].cy;
+                          var dataN = chart.polygons.xPolygon[i].cx;
+                          var row = [
+                              handleNumberWithCommas(dataN),
+                              handleNumberWithCommas(dataO),
+                              managers.msToTimeConverter(managers.executionTimeConverter(chart, dataO))];
+
+                          newData.unshift(row);
+                      }
+                  }
+
+                  redrawTable();
+
+                  function redrawTable() {
+                      var currentChart = $("#" + chart.id);
+                      var currentTableElement = currentChart.find(".graphDataTable");
+                      var table = currentTableElement.DataTable();
+
+                      managers.tableRowsAppender(table, newData);
+
+                  }
+              }
+          };
+          var handleNumberWithCommas = function(time) {
+              var stringifiedTime = time.toString();
+              var splited = stringifiedTime.split(/[.]/);
+
+              if(splited.length > 1) {
+                  var tmp = splited[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ") + "." + splited[1].substr(0, 2);
+                  return tmp;
+              } else {
+                  var tmp = splited[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+                  return tmp;
+              }
+          };
+
+          return {
+              run: function() {
+
+              },
+              cleaner: function(chartID) {
+                  resetChart(chartID);
+              },
+              installer: function(chart) {
+                  setPlaceholders(chart);
+                  setAmountOfElements(chart);
+                  configureScaleSwitcher(chart);
+              },
+              mouseClick: function(chart) {
+                  handleMouseClick(chart);
+              },
+              mouseOverGraph: function(event, chart) {
+                  handleMouseOverGraph(event, chart);
+              },
+              mouseOutGraph: function(chart) {
+                  handleMouseOutGraph(chart);
+
+              },
+              showResult: function(chartID) {
+                  handleShowResult(chartID);
+              },
+              timeUnitChange: function(chart) {
+                  handleTimeUnitChange(chart);
+              },
+              replaceNumberWithCommas: function(time) {
+                  return handleNumberWithCommas(time);
+              }
+
+          }
+      }());
+      var managers = (function() {
+          var xCoordinateIsLessThanMaxScale = function (requestedByMouse, request, chart) {
+              var xCoordinate = requestedByMouse ? parseInt(chartVars.x.invert(request)) : request;
+
+              return xCoordinate <= chart.axisScale.maxX;
+          };
+
+          var dotBuild = function(requestedByMouse, request, chart) {
+              var xCoordinate = requestedByMouse ? parseInt(chartVars.x.invert(request)) : request;
+
+              if(xCoordinate <= chart.axisScale.maxX) {
+                  var yCoordinate = charts.getCalculateComplexity(chart.id, xCoordinate);
+
+                  chart.elementsData.select(".dotByCursor").transition().duration(0)
+                          .attr("cx", chartVars.x(xCoordinate))
+                          .attr("cy", chartVars.y(yCoordinate))
+                          .style("display", "initial");
+                  chart.dotCoordinates.cx = xCoordinate;
+                  chart.dotCoordinates.cy = yCoordinate;
+              }
+          };
+
+          var polygon = (function() {
+              var polygonCoordinates = { //todo: should we to show empty fields of object for demonstarate stucture?
+                  x: [],
+                  y: []
+              };
+              var setInitialCoordinates = function(chart) {
+                  var polyIndex = chart.polygons.xPolygon.length - 1;
+                  polygonCoordinates.x[0] = {
+                      "x": chart.polygons.xPolygon[polyIndex].cx,
+                      "y": 0
+                  };
+                  polygonCoordinates.y[0] = {
+                      "x":0,
+                      "y":chart.polygons.yPolygon[polyIndex].cy
+                  };
+              };
+              var setIntermediatesCoordinates = function(xPosition, chart) {
+                  var polyIndex = chart.polygons.xPolygon.length - 1;
+                  var mainCoordinate = parseInt(chart.polygons.xPolygon[polyIndex].cx / chart.axisScale.unitInterval);
+                  var movingCoordinate = parseInt(xPosition / chart.axisScale.unitInterval);
+
+                  var coordinates = [];
+
+                  if(mainCoordinate <= movingCoordinate) {
+                      coordinates = calculateRightCoordinates(chart, mainCoordinate, movingCoordinate);
+                  } else {
+                      coordinates = calculateLeftCoordinates(chart, mainCoordinate, movingCoordinate);
+                  }
+
+                  $.extend(polygonCoordinates.x, coordinates);
+                  $.extend(polygonCoordinates.y, coordinates);
+
+              };
+              var calculateLeftCoordinates = function(chart, mainCoordinate, movingCoordinate, testCallback) {
+                  var coordinates = [];
+
+                  for(var i = 1; mainCoordinate >= movingCoordinate; i++, mainCoordinate--) {
+                      if(testCallback) {
+                          coordinates[i] = testCallback(mainCoordinate, chart);
+                      } else {
+                          coordinates[i] = countPolygonCoordinates(mainCoordinate, chart);
+                      }
+                  }
+
+                  return coordinates;
+              };
+              var calculateRightCoordinates = function(chart, mainCoordinate, movingCoordinate, testCallback) {
+                  var coordinates = [];
+
+                  for(var i = 1; mainCoordinate <= movingCoordinate; i++, mainCoordinate++) {
+                      if(testCallback) {
+                          coordinates[i] = testCallback(mainCoordinate, chart);
+                      } else {
+                          coordinates[i] = countPolygonCoordinates(mainCoordinate, chart);
+                      }
+                  }
+
+                  return coordinates;
+              };
+              var countPolygonCoordinates = function(mainCoordinate, chart) {
+                  return {
+                      "x": mainCoordinate * chart.axisScale.unitInterval,
+                      "y": chart.coordinates[mainCoordinate].coordinateY
+                  }
+              };
+              var setFinalCoordinates = function() {
+                  var xFinalCoordinates = [];
+                  var yFinalCoordinates = [];
+
+                  xFinalCoordinates[polygonCoordinates.x.length] = {
+                      "x": polygonCoordinates.x[polygonCoordinates.x.length - 1].x,
+                      "y": 0
+                  };
+                  yFinalCoordinates[polygonCoordinates.y.length] = {
+                      "x":0,
+                      "y":polygonCoordinates.y[polygonCoordinates.y.length - 1].y
+                  };
+
+                  $.extend(polygonCoordinates.x, xFinalCoordinates);
+                  $.extend(polygonCoordinates.y, yFinalCoordinates);
+              };
+
+              return {
+                  getCountPolygonCoordinates: function() {
+                      return countPolygonCoordinates;
+                  },
+                  getCalculateLeftCoordinates: function() {
+                      return calculateLeftCoordinates;
+                  },
+                  getCalculateRightCoordinates: function() {
+                      return calculateRightCoordinates;
+                  },
+                  getPolygonCoordinates: function(xPosition, chart) {
+                      polygonCoordinates = {
+                          x: [],
+                          y: []
+                      };
+                      setInitialCoordinates(chart);
+                      setIntermediatesCoordinates(xPosition, chart);
+                      setFinalCoordinates();
+
+                      return polygonCoordinates;
+                  }
+              }
+          }());
+          var fillPolygon = function(chart) {
+              if(chart.polygons.xPolygon.length < 1) {return;}
+              if(chart.polygons.yPolygon.length % 2 == 0) {return;}
+
+              var scaleX = d3.scale.linear()//todo: can we move it to chart object?
+                      .domain([0, chart.width])
+                      .range([0, chart.width]);
+
+              var scaleY = d3.scale.linear()
+                      .domain([0, chart.height])
+                      .range([0, chart.height]);
+
+              var currentPolygon = polygon.getPolygonCoordinates(chart.dotCoordinates.cx, chart);
+
+              var polyIndex = chart.coordinates.length - 1;
+              chart.polygons.xPolygons[chart.polygons.amountPolygons] = currentPolygon.x;
+              chart.polygons.yPolygons[chart.polygons.amountPolygons] = currentPolygon.y;
+
+              chart.elementsData.select(".polyX").remove();
+              chart.elementsData.select(".polyY").remove();
+
+              chart.elementsData.append("currentPolygon")
+                      .data([currentPolygon.x])
+                      .attr("class", "polyX")
+                      .attr("points",function(d) {
+                          return d.map(function(d) {
+                              return [
+                                  scaleX(chartVars.x(d.x)),
+                                  scaleY(chartVars.y(d.y))
+                              ].join(","); }).join(" ");
+                      })
+                      .attr("stroke","none")
+                      .attr("fill", function(){
+                          return getColor(polyIndex);
+                      })
+                      .attr("stroke-width",2);
+
+              chart.elementsData.append("currentPolygon")
+                      .data([currentPolygon.x])
+                      .attr("class", "polyY")
+                      .attr("points",function(d) {
+                          return d.map(function(d) {
+                              return [
+                                  scaleX(chartVars.x(d.x)),
+                                  scaleY(chartVars.y(d.y))
+                              ].join(","); }).join(" ");})
+                      .attr("stroke","none")
+                      .attr("fill", function(){
+                          return getColor(polyIndex);
+                      })
+                      .attr("stroke-width",2);
+          };
+          var fillPolygons = function(chart) {
+              var scaleX = d3.scale.linear()
+                      .domain([0, chart.width])
+                      .range([0, chart.width]);
+
+              var scaleY = d3.scale.linear()
+                      .domain([0, chart.height])
+                      .range([0, chart.height]);
+
+              var countPolygon = chart.polygons.xPolygons.length;
+              for(var i = 0; i < countPolygon;) {
+                  var polyX = chart.polygons.xPolygons[i];
+                  var polyY = chart.polygons.yPolygons[i];
+                  var polyIndex = i;
+                  i = i + 2;
+
+                  chart.elementsData.append("polygon")
+                          .data([polyX])
+                          .attr("class", "polyFixedX")
+                          .attr("points",function(d) {
+                              return d.map(function(d) { return [
+                                  scaleX(chartVars.x(d.x)),
+                                  scaleY(chartVars.y(d.y))
+                              ].join(","); }).join(" ");})
+                          .attr("stroke","none")
+                          .attr("fill", function(d){
+                              return getColor(polyIndex);
+                          })
+                          .attr("stroke-width",2);
+
+                  chart.elementsData.append("polygon")
+                          .data([polyY])
+                          .attr("class", "polyFixedY")
+                          .attr("points",function(d) {
+                              return d.map(function(d) { return [
+                                  scaleX(chartVars.x(d.x)),
+                                  scaleY(chartVars.y(d.y))
+                              ].join(","); }).join(" ");})
+                          .attr("stroke","none")
+                          .attr("fill", function(d){
+                              return getColor(polyIndex);
+                          })
+                          .attr("stroke-width",2);
+              }
+          };
+          var setRedDots = function(chart) {
+              var fundLength = chart.polygons.xPolygon.length;
+
+              for(var i = 0; i < fundLength; i++) {
+                  if(chart.polygons.xPolygon[i].cx) {
+                      chart.elementsData.select(".guideXHold" + i).remove();
+                      chart.elementsData.select(".guideYHold" + i).remove();
+                      chart.elementsData.select(".dotByRequestHold" + i).remove();
+
+                      chart.elementsData.append("line")
+                              .attr("class", "guideXHold" + i)
+                              .attr("x1", 0)
+                              .attr("y1", chartVars.y(chart.polygons.xPolygon[i].cy))
+                              .attr("x2", chartVars.x(chart.polygons.xPolygon[i].cx))
+                              .attr("y2", chartVars.y(chart.polygons.xPolygon[i].cy))
+                              .style("stroke-dasharray", ("3, 3"))
+                              .style("stroke", "black")
+                              .style("display", "block");
+
+                      chart.elementsData.append("line")
+                              .attr("class", "guideYHold" + i)
+                              .attr("x1", chartVars.x(chart.polygons.xPolygon[i].cx))
+                              .attr("y1", chart.height)
+                              .attr("x2", chartVars.x(chart.polygons.xPolygon[i].cx))
+                              .attr("y2", chartVars.y(chart.polygons.xPolygon[i].cy))
+                              .style("stroke-dasharray", ("3, 3"))
+                              .style("stroke", "black")
+                              .style("display", "block");
+
+                      chart.elementsData.append("circle")
+                              .attr("class", "dotByRequestHold" + i)
+                              .attr("r", 5)
+                              .attr("cx", chartVars.x(chart.polygons.xPolygon[i].cx))
+                              .attr("cy", chartVars.y(chart.polygons.xPolygon[i].cy))
+                              .style("stroke", function(d){return colors(d.id-1);})
+                              .style("fill", "red")
+                              .style("display", "block");
+                  }
+              }
+          };
+          var buildGuides = function(chart) {
+              chart.elementsData.select(".guideX").remove();
+              chart.elementsData.append("line")
+                      .attr("class", "guideX")
+                      .attr("x1", 0)
+                      .attr("y1", chartVars.y(chart.dotCoordinates.cy))
+                      .attr("x2", chartVars.x(chart.dotCoordinates.cx))
+                      .attr("y2", chartVars.y(chart.dotCoordinates.cy))
+                      .style("stroke-dasharray", ("3, 3"))
+                      .style("stroke", "rgb(155, 154, 154)")
+                      .style("position", "relative")
+                      .style("z-index", 2)
+                      .style("display", "block");
+
+              chart.elementsData.select(".guideY").remove();
+              chart.elementsData.append("line")
+                      .attr("class", "guideY")
+                      .attr("x1", chartVars.x(chart.dotCoordinates.cx))
+                      .attr("y1", chart.height)
+                      .attr("x2", chartVars.x(chart.dotCoordinates.cx))
+                      .attr("y2", chartVars.y(chart.dotCoordinates.cy))
+                      .style("stroke-dasharray", ("3, 3"))
+                      .style("stroke", "rgb(155, 154, 154)")
+                      .style("position", "relative")
+                      .style("z-index", 2)
+                      .style("display", "block");
+
+              chart.elementsData.select(".dotByCursor").remove();
+              chart.elementsData.append("circle")
+                      .attr("class", "dotByCursor")
+                      .attr("r", 5)
+                      .attr("cx", chartVars.x(chart.dotCoordinates.cx))
+                      .attr("cy", chartVars.y(chart.dotCoordinates.cy))
+                      .style("stroke", function(d){return colors(d.id-1);})
+                      .style("fill", function(d){return colors(d.id-1);})
+                      .style("display", "block");
+          };
+          var holdGuides = function(chart) {
+              var polyIndex = chart.polygons.xPolygon.length;
+              initialPolygon(polyIndex, chart);
+
+              chart.elementsData.select(".dotByRequest").attr("class", "dotByRequestHold" + polyIndex);
+              chart.elementsData.select(".dotByCursor").attr("class", "dotByCursorHold" + polyIndex);
+              chart.elementsData.select(".guideX").attr("class", "guideXHold" + polyIndex);
+              chart.elementsData.select(".guideY").attr("class", "guideYHold" + polyIndex);
+              chart.elementsData.select(".polyX").attr("class", "polyXHold" + polyIndex);
+              chart.elementsData.select(".polyY").attr("class", "polyYHold" + polyIndex);
+
+              chart.elementsData.append("line")
+                      .attr("class", "guideX")
+                      .style("display", "none");
+
+              chart.elementsData.append("line")
+                      .attr("class", "guideY")
+                      .style("display", "none");
+
+              chart.elementsData.append("circle")
+                      .attr("class", "dotByCursor")
+                      .attr("r", 5)
+                      .attr("cx", chartVars.x(chart.dotCoordinates.cx))
+                      .attr("cy", chartVars.y(chart.dotCoordinates.cy))
+                      .style("stroke", function(d){return colors(d.id-1);})
+                      .style("fill", function(d){return colors(d.id-1);})
+                      .style("display", "block");
+
+              removeIntermediatesDots(chart);
+
+              function initialPolygon(polyIndex, chart) {
+                  chart.polygons.xPolygon[polyIndex] = {"cx": chart.dotCoordinates.cx, "cy": chart.dotCoordinates.cy, "color": getColor(polyIndex)};
+                  chart.polygons.yPolygon[polyIndex] = {"cx": chart.dotCoordinates.cx, "cy": chart.dotCoordinates.cy, "color": getColor(polyIndex)};
+                  chart.polygons.amountPolygons++;
+              }
+
+              function removeIntermediatesDots(chart) {
+                  var fundLength = chart.polygons.xPolygon.length;
+
+                  if(fundLength % 2 != 0) {return;}
+
+                  var firstXPoligonPoint = chart.polygons.xPolygon[fundLength - 2].cx;
+                  var lastXPoligonPoint  = chart.polygons.yPolygon[fundLength - 1].cx;
+                  var minX = firstXPoligonPoint > lastXPoligonPoint ? lastXPoligonPoint : firstXPoligonPoint;
+                  var maxX = firstXPoligonPoint > lastXPoligonPoint ? firstXPoligonPoint : lastXPoligonPoint;
+
+                  for(var i = 0; i < fundLength; i++) {
+                      if(chart.polygons.xPolygon[i].cx > minX && chart.polygons.yPolygon[i].cx < maxX) {
+                          chart.elementsData.select(".guideXHold" + i).remove();
+                          chart.elementsData.select(".guideYHold" + i).remove();
+                          chart.elementsData.select(".dotByRequestHold" + i).remove();
+                          chart.elementsData.select(".dotByCursorHold" + i).remove();
+                          chart.polygons.xPolygon[i] = {};
+                      }
+                  }
+              }
+          };
+          var setDotsTable = function(chart) {
+              var currentChart = $("#" + chart.id);
+              var newRow = [];
+              var redDotsArrayLength = chart.polygons.xPolygon.length;
+
+              if(redDotsArrayLength > 0) {
+                  var dataO = chart.polygons.xPolygon[redDotsArrayLength - 1].cy;
+                  var dataN = chart.polygons.xPolygon[redDotsArrayLength - 1].cx;
+
+                  newRow = [
+                      handlers.replaceNumberWithCommas(dataN),
+                      handlers.replaceNumberWithCommas(dataO),
+                      managers.msToTimeConverter(managers.executionTimeConverter(chart, dataO))];
+
+                  addRow();
+              }
+
+              function addRow() {
+                  var currentTableElement = currentChart.find(".graphDataTable");
+                  var table = currentTableElement.DataTable();
+                  var tableData = table.data();
+
+                  tableData.unshift(newRow);
+
+                  addRows(table, tableData);
+                  highlightNewRow();
+
+                  function highlightNewRow() {
+                      var node = table
+                              .row(0)
+                              .node();
+                      $(node)
+                              .css('color', 'red')
+                              .animate({color: 'black'});
+                  }
+              }
+          };
+          var getExecutionTime = function(chart, dataO) {
+              var currentChart = $("#" + chart.id);
+              var selectedTimeUnit = currentChart.find(".timeUnit").attr('selected', 'true').val();
+              var timeFieldValue = currentChart.find(".executionTime").val();
+              var executionTime = dataO * (
+                              timeFieldValue ? convertToMills(timeFieldValue, selectedTimeUnit) : convertToMills(chart.executionTime, selectedTimeUnit)
+                      );
+
+              return executionTime;
+          };
+          var addRows = function(table, data) {
+              table
+                      .clear()
+                      .rows.add(data)
+                      .draw();
+          };
+          var msToTime = function(ms) {
+              var processTime;
+
+              function addZ(n) {
+                  return (n < 10 ? '0' : '') + n.toFixed(0);
+              }
+
+              var s = ms / 1000;
+              var msText = handlers.replaceNumberWithCommas(ms);
+              processTime = msText + 'ms';
+              if(s > 0) {
+                  var secs = s % 60;
+                  var m = (s - secs) / 60;
+                  processTime = addZ(secs) + 's: ' + processTime;
+                  if (m > 0) {
+                      var mins = m % 60;
+                      var h = (m - mins) / 60;
+                      processTime = addZ(mins) + 'm: ' + processTime;
+                      if (h > 0) {
+                          var hrs = h % 60;
+                          var d = (h - hrs) / 60;
+                          processTime = addZ(hrs) + 'h: ' + processTime;
+                          if (d > 0) {
+                              var days = d % 365;
+                              var year = (d - days) / 365;
+                              processTime = days.toFixed(0) + 'd: ' + processTime;
+                              if(year > 0) {
+                                  var yText = handlers.replaceNumberWithCommas(year);
+                                  processTime = yText + 'y: ' + processTime;
+                              }
+                          }
+                      }
+                  }
+              }
+
+              return processTime;
+          };
+          var convertToMills = function(time, selectedTimeUnit) {
+              var data = {
+                  ms: function(time) {
+                      return time;
+                  },
+                  sec: function(time) {
+                      return time * 1000;
+                  },
+                  min: function(time) {
+                      return time * 60000;
+                  },
+                  hour: function(time) {
+                      return time * 3600000;
+                  },
+                  day: function(time) {
+                      return time * 86400000;
+                  }
+              };
+
+              return data[selectedTimeUnit](time);
+          };
+          var getColor = function(colorIndex) {
+              var colorsTable = [
+                  {"color": d3.rgb(251, 208, 199)},
+                  {"color": d3.rgb(251, 217, 178)},
+                  {"color": d3.rgb(251, 223, 145)},
+                  {"color": d3.rgb(255, 249, 157)},
+                  {"color": d3.rgb(199, 225, 157)},
+                  {"color": d3.rgb(138, 202, 175)},
+                  {"color": d3.rgb(153, 211, 237)},
+                  {"color": d3.rgb(191, 210, 237)},
+                  {"color": d3.rgb(221, 188, 213)},
+                  {"color": d3.rgb(253, 228, 227)}
+              ];
+
+              if(colorIndex > colorsTable.length - 1) {
+                  var index = colorIndex.toString().substr(colorIndex.toString().length - 1, 1);
+
+                  return colorsTable[index].color;
+              } else {
+                  return colorsTable[colorIndex].color;
+              }
+          };
+
+          return {
+              maxScaleIsNotExceeded: function(requestedByMouse, request, chart) {
+                  return xCoordinateIsLessThanMaxScale(requestedByMouse, request, chart);
+              },
+              buildDot: function(requestedByMouse, request, chart) {
+                  dotBuild(requestedByMouse, request, chart);
+              },
+              holdGuides: function(chart) {
+                  holdGuides(chart);
+              },
+              buildSinglePolygon: function(chart) {
+                  fillPolygon(chart);
+              },
+              getPolygon: function() {
+                  return polygon;
+              },
+              buildPolygons: function(chart) {
+                  fillPolygons(chart);
+              },
+              buildRedDots: function(chart) {
+                  setRedDots(chart);
+              },
+              buildGuides: function(chart) {
+                  buildGuides(chart);
+              },
+              buildDotsTable: function(chart) {
+                  setDotsTable(chart);
+              },
+              tableRowsAppender: function(table, data) {
+                  addRows(table, data);
+              },
+              msToTimeConverter: function(ms) {
+                  return msToTime(ms);
+              },
+              executionTimeConverter: function(chart, dataO) {
+                  return getExecutionTime(chart, dataO);
+              }
+          }
+      }());
+
+
+      Polymer({
+          is: 'complexity-chart',
+          ready: function() {
+              this.scopeSubtree(this.$.chartContainer, true);
+//              console.log(this.$.chartContainer);
+
+              linkedListSVG = d3.select(this.$.chartContainer).append("svg")
+                      .attr("width", "100%")
+                      .attr("height", 300)
+                      .attr("id", "linkedListSVGContainer")
+                      .attr("class", "linkedListRectSvg")
+                      .append("g")
+                      .attr("transform", "scale(1)")
+                      .append("g");
+
+              linkedListSVG.append("rect")
+                      .attr("width", "100%")
+                      .attr("height", "100%")
+                      .attr("fill", "red");
+
+              linkedListSVG.append("text")
+                      .text("KPL");
+
+
+
+//              svg = d3.select(this.$.chartContainer).append("svg");
+
+//              var chartID = this.complexity;
+//              console.log(chartID);
+
+//              charts.init(chartID);
+          },
+          properties: {
+              complexity: String,
+          }
+      });
+  </script>
+
+</dom-module>

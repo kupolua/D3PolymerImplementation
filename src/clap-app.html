@@ -20,6 +20,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="../bower_components/iron-selector/iron-selector.html">
 <link rel="import" href="../bower_components/paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../bower_components/paper-menu/paper-menu.html">
+<link rel="import" href="../bower_components/paper-menu/paper-submenu.html">
 <link rel="import" href="clap-icons.html">
 
 <dom-module id="clap-app">
@@ -59,6 +61,28 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       .drawer-list a.subroute {
         padding-left: 32px;
       }
+      .horizontal-section {
+        padding: 0 !important;
+      }
+      .avatar {
+        display: inline-block;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        overflow: hidden;
+        background: #ccc;
+      }
+      paper-item {
+        --paper-item: {
+          cursor: pointer;
+        };
+      }
+      .sublist paper-item {
+        padding-left: 30px;
+      }
+      .sublist2 paper-item {
+        padding-left: 50px;
+      }
 
 
     </style>
@@ -75,11 +99,67 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <!-- Drawer content -->
       <app-drawer>
         <app-toolbar>Menu</app-toolbar>
+        <!--<iron-selector selected="[[page]]" attr-for-selected="name" class="drawer-list" role="navigation">-->
+          <!--<a name="greetings" href="/greetings">Greetings</a>-->
+          <!--<a name="arraylist" href="/arraylist">Array List</a>-->
+          <!--<a name="linkedlist" href="/linkedlist">Linked List</a>-->
+          <!--<a name="charts" href="/charts">Charts</a>-->
+        <!--</iron-selector>-->
+        <div>
         <iron-selector selected="[[page]]" attr-for-selected="name" class="drawer-list" role="navigation">
-          <a name="greetings" href="/greetings">Greetings</a>
-          <a name="arraylist" href="/arraylist">Array List</a>
-          <a name="linkedlist" href="/linkedlist">Linked List</a>
+          <div class="horizontal-section">
+            <paper-menu attr-for-item-title="label">
+                <paper-item class="menu-trigger">
+                    <a name="greetings" href="/greetings">Greetings</a>
+                </paper-item>
+                <paper-item class="menu-trigger">
+                    <a name="arraylist" href="/arraylist">Array List</a>
+                </paper-item>
+                <paper-item class="menu-trigger">
+                    <a name="linkedlist" href="/linkedlist">Linked List</a>
+                </paper-item>
+                <paper-item class="menu-trigger">
+                  <a name="n" href="/n">O(n)</a>
+                </paper-item>
+                <paper-item class="menu-trigger">
+                  <a name="logn" href="/logn">O(logN)</a>
+                </paper-item>
+                <paper-item class="menu-trigger">
+                  <a name="nlogn" href="/nlogn">O(NlogN)</a>
+                </paper-item>
+                <paper-item class="menu-trigger">
+                  <a name="n2" href="/n2">O(N2)</a>
+                </paper-item>
+                <paper-item class="menu-trigger">
+                  <a name="n3" href="/n3">O(N3)</a>
+                </paper-item>
+
+                <!--<paper-menu class="menu-content">-->
+                  <!--<paper-submenu label="Methods">-->
+                    <!--<paper-item class="menu-trigger">Charts</paper-item>-->
+                    <!--<paper-menu class="menu-content sublist1">-->
+                      <!--<paper-item>-->
+                          <!--<a name="n" href="/n">O(n)</a>-->
+                      <!--</paper-item>-->
+                      <!--<paper-item>-->
+                          <!--<a name="logn" href="/logn">O(logn)</a>-->
+                      <!--</paper-item>-->
+                      <!--<paper-item>-->
+                          <!--<a name="nlogn" href="/nlogn">O(nlogn)</a>-->
+                      <!--</paper-item>-->
+                      <!--<paper-item>-->
+                          <!--<a name="n2" href="/n2">O(n2)</a>-->
+                      <!--</paper-item>-->
+                      <!--<paper-item>-->
+                          <!--<a name="n3" href="/n3">O(n3)</a>-->
+                      <!--</paper-item>-->
+                    <!--</paper-menu>-->
+                  <!--</paper-submenu>-->
+                <!--</paper-menu>-->
+            </paper-menu>
+          </div>
         </iron-selector>
+        </div>
       </app-drawer>
 
       <!-- Main content -->
@@ -96,6 +176,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <clap-greetings name="greetings"></clap-greetings>
           <clap-arraylist name="arraylist"></clap-arraylist>
           <clap-linkedlist name="linkedlist"></clap-linkedlist>
+          <clap-complexity name="n" id="n"></clap-complexity>
+          <clap-complexity name="logn" id="logn"></clap-complexity>
+          <clap-complexity name="nlogn" id="nlogn"></clap-complexity>
+          <clap-complexity name="n2" id="n2"></clap-complexity>
+          <clap-complexity name="n3" id="n3"></clap-complexity>
+          <!--<clap-n name="n" complexity="n"></clap-n>-->
+          <!--<clap-logn name="logn"></clap-logn>-->
+          <!--<clap-nlogn name="nlogn"></clap-nlogn>-->
+          <!--<clap-n2 name="n2"></clap-n2>-->
+          <!--<clap-n3 name="n3"></clap-n3>-->
         </iron-pages>
 
       </app-header-layout>

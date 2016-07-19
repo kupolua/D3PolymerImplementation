@@ -608,7 +608,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               var elementInterval = (rectOptions.positionX / 2);
               var arrayListWidth = (elementWidth + elementInterval) * rectOptions.numbersArray.length;
               var arrayListScaleFactor = window.innerWidth < arrayListWidth ? window.innerWidth / arrayListWidth : 1;
-              console.log(arrayListWidth, arrayListScaleFactor);
 
               arrayListSVG.selectAll("g").attr("transform", "translate(1)scale(" + arrayListScaleFactor + ")");
           };
