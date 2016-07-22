@@ -10,49 +10,155 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
-<!--<link rel="import" href="clap-globals.html"> todo: example: separate properties and global variables into other file   -->
+<link rel="import" href="../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.11/d3.min.js"></script>
 <script src="Colors.js"></script>
 
 <dom-module id="clap-linkedlist">
 
   <template>
-    <style>
+    <style is="custom-style">
+        :host {
+            display: block;
+            --clap-backgroundColor: #eee;
+        }
 
+        #linkedlist {
+            margin-left: 30px;
+        }
+
+        #linkedListControls {
+            @apply(--layout-vertical);
+            @apply(--layout-wrap);
+            height: 544px;
+            width: 384px;
+            margin-left: 30px;
+        }
+
+        #linkedListControls > paper-card {
+            box-sizing: border-box;
+            max-width: 184px;
+            margin: 4px;
+            flex: 0 0 auto;
+        }
+
+        paper-card.toggle {
+            background: var(--paper-cyan-200);
+        }
+        paper-card.addElement {
+            background: var(--paper-green-200);
+        }
+        paper-button.addElement {
+            background-color: var(--paper-green-500);
+            color: white;
+        }
+        paper-card.searchElement {
+            background: var(--paper-yellow-200);
+        }
+        paper-button.searchElement {
+            background-color: var(--paper-yellow-700);
+            color: white;
+        }
+        paper-card.removeElement {
+            background: var(--paper-red-200);
+        }
+        paper-button.removeElement {
+            background-color: var(--paper-red-500);
+            color: white;
+        }
+
+        paper-card.regenerateLinkedList {
+            background: var(--paper-brown-200);
+        }
+        paper-button.regenerateLinkedList {
+            background-color: var(--paper-brown-700);
+            color: white;
+        }
+
+        /*paper-card.card-heading {*/
+            /*background: var(--paper-cyan-500);*/
+        /*}*/
+        paper-button.custom {
+            --paper-button-ink-color: var(--paper-pink-a200);
+            /* These could also be individually defined for each of the
+              specific css classes, but we'll just do it once as an example */
+            --paper-button-flat-keyboard-focus: {
+                background-color: var(--paper-pink-a200);
+                color: white !important;
+            };
+            --paper-button-raised-keyboard-focus: {
+                background-color: var(--paper-pink-a200) !important;
+                color: white !important;
+            };
+        }
+        paper-button.custom:hover {
+            background-color: var(--paper-indigo-100);
+        }
+        paper-button.green {
+            background-color: var(--paper-green-500);
+            color: white;
+        }
+        paper-button.disabled {
+            color: white;
+        }
     </style>
-    <!--<clap-globals id="globals"></clap-globals>-->
     <div id="linkedlist"></div>
-    <div>
-      <label>
-        Enable Zoom Feature
-          <paper-toggle-button id="linkedListZoomToggleSwitch"></paper-toggle-button>
-      </label>
-    </div>
-    <div>
-        <button class="btn btn-success btn-sm" id="addFirstElement-button" type="button">Add first element</button>
-        <input type="text" pattern="^[0-9]{1,}$" maxlength="3" class="form-control input-sm" id="firstElementData" placeholder="input value" required>
-    </div>
-    <div>
-        <button class="btn btn-success btn-sm" id="addLastElement-button" type="button">Add last element</button>
-        <input type="text" pattern="^[0-9]{1,}$" maxlength="3" class="form-control input-sm" id="lastElementData" placeholder="input value" required>
-    </div>
-    <div>
-        <button class="btn btn-success btn-sm" id="searchIndex-button" type="button">Search by Index</button>
-        <input type="text" pattern="^[0-9]{1,}$" maxlength="3" class="form-control input-sm" id="searchIndexData" placeholder="input index" required>
-    </div>
-    <div>
-        <button class="btn btn-success btn-sm" id="searchValue-button" type="button">Search by Value</button>
-        <input type="text" pattern="^[0-9]{1,}$" maxlength="3" class="form-control input-sm" id="searchValueData" placeholder="input value" required>
-    </div>
-    <div>
-        <button class="btn btn-success btn-sm" id="removeFirstElement-button" type="button">Remove first element</button>
-    </div>
-    <div>
-        <button class="btn btn-success btn-sm" id="removeLastElement-button" type="button">Remove last element</button>
-    </div>
-    <div>
-        <button type="button" id="regenerateLinkedList-button" class="btn btn-primary">Regenerate</button>
-    </div>
+      <div id="linkedListControls">
+          <paper-card class="toggle" heading="Enable Zoom">
+              <div class="card-content"></div>
+              <paper-toggle-button class="card-actions" id="linkedListZoomToggleSwitch"></paper-toggle-button>
+          </paper-card>
+          <paper-card class="addElement" heading="Add first element">
+              <div class="card-content">
+                  <paper-input id="firstElementData" required label="input value" pattern="[0-9]*" error-message="numbers only!"></paper-input>
+              </div>
+              <div class="card-actions">
+                  <paper-button raised class="custom green" id="addFirstElement-button">Add</paper-button>
+              </div>
+          </paper-card>
+          <paper-card class="addElement" heading="Add last element">
+              <div class="card-content">
+                  <paper-input id="lastElementData" required label="input value" pattern="[0-9]*" error-message="numbers only!"></paper-input>
+              </div>
+              <div class="card-actions">
+                  <paper-button toggles raised class="custom green" id="addLastElement-button">Add</paper-button>
+              </div>
+          </paper-card>
+          <paper-card class="searchElement" heading="Search by Index">
+              <div class="card-content">
+                  <paper-input id="searchIndexData" required label="input value" pattern="[0-9]*" error-message="numbers only!"></paper-input>
+              </div>
+              <div class="card-actions">
+                  <paper-button toggles raised class="custom searchElement" id="searchIndex-button">Search</paper-button>
+              </div>
+          </paper-card>
+          <paper-card class="searchElement" heading="Search by Value">
+              <div class="card-content">
+                  <paper-input id="searchValueData" required label="input value" pattern="[0-9]*" error-message="numbers only!"></paper-input>
+              </div>
+              <div class="card-actions">
+                  <paper-button toggles raised class="custom searchElement" id="searchValue-button">Search</paper-button>
+              </div>
+          </paper-card>
+          <paper-card class="removeElement" heading="Remove first element">
+              <div class="card-actions">
+                  <paper-button toggles raised class="custom removeElement" id="removeFirstElement-button">Remove</paper-button>
+              </div>
+          </paper-card>
+          <paper-card class="removeElement" heading="Remove last element">
+              <div class="card-actions">
+                  <paper-button toggles raised class="custom removeElement" id="removeLastElement-button">Remove</paper-button>
+              </div>
+          </paper-card>
+          <paper-card class="regenerateLinkedList" heading="Regenerate Linked List">
+              <div class="card-actions">
+                  <paper-button toggles raised class="custom regenerateLinkedList" id="regenerateLinkedList-button">Regenerate</paper-button>
+              </div>
+          </paper-card>
+      </div>
   </template>
 
   <script>
@@ -64,13 +170,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         properties: {
             svgOptions: {
                 width: 1024,
-                height: 200,
+                height: 300,
                 initialArrayLength: 0,
                 minElements: 5,
                 initialBounds: {
                     lowerBound: 1,
                     upperBound: 100
-                }
+                },
+                linkedListСanvasColor: '#EEEEEE'
             },
             linkedListRectPrevOptions: {
                 width: 35,
@@ -83,9 +190,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 arrowLineSourceY: 184,
                 arrowLineTargetX: -120,
                 arrowLineTargetY: 184,
+                changeArrowPosition: 20,
                 fontSize: 8,
                 intervalX: 0,
-                textIntervalX: 15
+                textIntervalX: 15,
+                text: 'PREV'
             },
             linkedListRectOptions: {
                 side: 50,
@@ -113,7 +222,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 arrowLineTargetY: 134,
                 fontSize: 8,
                 intervalX: 75,
-                textIntervalX: 94
+                textIntervalX: 94,
+                text: 'NEXT'
             },
             circleOptions: {
                 positionX: 180,
@@ -131,6 +241,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 groupTextPositionX: 180,
                 groupIndexTextPositionY: 230,
                 movingToPositionY: 255
+            },
+            searchElement: {
+                indexPosition: {cx: 14, cy: 251, x: 14, y: 255},
+                valuePosition: {cx: 14, cy: 101, x: 14, y: 105}
             },
             movingSpeed: {
                 searchIndex: 250,
@@ -152,7 +266,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             linkedListRectIndexAxesGroup: ''
         },
         ready: function() {
-            GLOBALS = this;
+            moduleScope = this;
 
             this.scopeSubtree(this.$.linkedlist, true);
 
@@ -162,7 +276,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             this.resize();
         },
         buildСanvas: function () {
-            GLOBALS.variables.linkedListSVG = d3.select(this.$.linkedlist).append("svg")
+            moduleScope.variables.linkedListSVG = d3.select(this.$.linkedlist).append("svg")
                     .attr("width", "100%")
                     .attr("height", 300)
                     .attr("id", "linkedListSVGContainer")
@@ -171,17 +285,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     .attr("transform", "scale(1)")
                     .append("g");
 
-            GLOBALS.variables.linkedListSVG.append("rect")
+            moduleScope.variables.linkedListSVG.append("rect")
                     .attr("width", "100%")
                     .attr("height", "100%")
                     .attr("class", "linkedListСanvas")
-                    .attr("fill", "#EEEEEE");
+                    .attr("fill", this.getComputedStyleValue('--clap-backgroundColor'));
         },
         setLinkedListData: function () {
-            GLOBALS.variables.linkedListDefaultData.forEach(function (val) {
-                GLOBALS.variables.linkedListData.push(val);
+            moduleScope.variables.linkedListDefaultData.forEach(function (val) {
+                moduleScope.variables.linkedListData.push(val);
             });
-            GLOBALS.properties.svgOptions.initialArrayLength = GLOBALS.variables.linkedListData.length;
+            moduleScope.properties.svgOptions.initialArrayLength = moduleScope.variables.linkedListData.length;
         },
         addLinkedList: function () {
             this.buildRectsPrevGroup();
@@ -192,10 +306,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             this.resetZoomLinkedList();
         },
         buildRectsPrevGroup: function () {
-            if(GLOBALS.variables.linkedListRectPrevGroup) {GLOBALS.variables.linkedListRectPrevGroup.remove()};
+            if(moduleScope.variables.linkedListRectPrevGroup) {moduleScope.variables.linkedListRectPrevGroup.remove()};
 
-            GLOBALS.variables.linkedListRectPrevGroup = GLOBALS.variables.linkedListSVG.selectAll("g.rectNode")
-                    .data(GLOBALS.variables.linkedListData)
+            moduleScope.variables.linkedListRectPrevGroup = moduleScope.variables.linkedListSVG.selectAll("g.rectNode")
+                    .data(moduleScope.variables.linkedListData)
                     .enter()
                     .append("g")
                     .attr("class", function (d, i) {
@@ -206,14 +320,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     .on("mouseout", function (d, i) {
                     });
 
-            GLOBALS.variables.linkedListRectPrevGroup
+            moduleScope.variables.linkedListRectPrevGroup
                     .append("rect")
-                    .attr("width", GLOBALS.properties.linkedListRectPrevOptions.width)
-                    .attr("height", GLOBALS.properties.linkedListRectPrevOptions.height)
+                    .attr("width", moduleScope.properties.linkedListRectPrevOptions.width)
+                    .attr("height", moduleScope.properties.linkedListRectPrevOptions.height)
                     .attr("x", function (d, i) {
-                        return (i * GLOBALS.properties.linkedListRectPrevOptions.positionX) + GLOBALS.properties.linkedListRectPrevOptions.intervalX;
+                        return (i * moduleScope.properties.linkedListRectPrevOptions.positionX) + moduleScope.properties.linkedListRectPrevOptions.intervalX;
                     })
-                    .attr("y", GLOBALS.properties.linkedListRectPrevOptions.positionY)
+                    .attr("y", moduleScope.properties.linkedListRectPrevOptions.positionY)
                     .attr("rx", 6)
                     .attr("ry", 6)
                     .attr("class", function (d, i) {
@@ -221,10 +335,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     })
                     .attr("linkID", "prev")
                     .attr("rectPrevIndex", function (d, i) {
-                        return GLOBALS.variables.linkedListData[i - 1];
+                        return moduleScope.variables.linkedListData[i - 1];
                     })
                     .attr("colorIndex", function (d, i) {
-                        return GLOBALS.variables.linkedListData[i - 1];
+                        return moduleScope.variables.linkedListData[i - 1];
                     })
                     .style("stroke", "black")
                     .style("stroke-width", 0.5)
@@ -234,26 +348,26 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                         return colors.getColor(colorIndex);
                     });
 
-            GLOBALS.variables.linkedListRectPrevGroup.append("text")
+            moduleScope.variables.linkedListRectPrevGroup.append("text")
                     .text(function (d, i) {
-                        return "PREV";
+                        return moduleScope.properties.linkedListRectPrevOptions.text;
                     })
                     .attr("class", function (d, i) {
                         return "rectPrevText" + i + " linkedListGroup";
                     })
                     .attr("text-anchor", "middle")
                     .attr("x", function (d, i) {
-                        return (i * GLOBALS.properties.linkedListRectPrevOptions.groupTextPositionX) + GLOBALS.properties.linkedListRectPrevOptions.textIntervalX;
+                        return (i * moduleScope.properties.linkedListRectPrevOptions.groupTextPositionX) + moduleScope.properties.linkedListRectPrevOptions.textIntervalX;
                     })
-                    .attr("y", GLOBALS.properties.linkedListRectPrevOptions.groupTextPositionY - 15)
+                    .attr("y", moduleScope.properties.linkedListRectPrevOptions.groupTextPositionY - 15)
                     .attr("font-family", "sans-serif")
-                    .attr("font-size", GLOBALS.properties.linkedListRectPrevOptions.fontSize)
+                    .attr("font-size", moduleScope.properties.linkedListRectPrevOptions.fontSize)
                     .attr("colorIndex", "white")
                     .attr("fill", "white");
 
-            GLOBALS.variables.linkedListRectPrevGroup.append("text")
+            moduleScope.variables.linkedListRectPrevGroup.append("text")
                     .text(function (d, i) {
-                        var nextData = GLOBALS.variables.linkedListData[i - 1];
+                        var nextData = moduleScope.variables.linkedListData[i - 1];
                         if (i === 0) {
                             nextData = "null";
                         }
@@ -264,19 +378,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     })
                     .attr("text-anchor", "middle")
                     .attr("x", function (d, i) {
-                        return (i * GLOBALS.properties.linkedListRectPrevOptions.groupTextPositionX) + GLOBALS.properties.linkedListRectPrevOptions.textIntervalX;
+                        return (i * moduleScope.properties.linkedListRectPrevOptions.groupTextPositionX) + moduleScope.properties.linkedListRectPrevOptions.textIntervalX;
                     })
-                    .attr("y", GLOBALS.properties.linkedListRectPrevOptions.groupTextPositionY)
+                    .attr("y", moduleScope.properties.linkedListRectPrevOptions.groupTextPositionY)
                     .attr("font-family", "sans-serif")
                     .attr("font-size", "13px")
                     .attr("colorIndex", "white")
                     .attr("fill", "white");
         },
         buildRectsNextGroup: function () {
-            if(GLOBALS.variables.linkedListRectNextGroup) {GLOBALS.variables.linkedListRectNextGroup.remove()};
+            if(moduleScope.variables.linkedListRectNextGroup) {moduleScope.variables.linkedListRectNextGroup.remove()};
 
-            GLOBALS.variables.linkedListRectNextGroup = GLOBALS.variables.linkedListSVG.selectAll("g.rectNode")
-                    .data(GLOBALS.variables.linkedListData)
+            moduleScope.variables.linkedListRectNextGroup = moduleScope.variables.linkedListSVG.selectAll("g.rectNode")
+                    .data(moduleScope.variables.linkedListData)
                     .enter()
                     .append("g")
                     .attr("class", function (d, i) {
@@ -287,14 +401,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     .on("mouseout", function (d, i) {
                     });
 
-            GLOBALS.variables.linkedListRectNextGroup
+            moduleScope.variables.linkedListRectNextGroup
                     .append("rect")
-                    .attr("width", GLOBALS.properties.linkedListRectNextOptions.width)
-                    .attr("height", GLOBALS.properties.linkedListRectNextOptions.height)
+                    .attr("width", moduleScope.properties.linkedListRectNextOptions.width)
+                    .attr("height", moduleScope.properties.linkedListRectNextOptions.height)
                     .attr("x", function (d, i) {
-                        return (i * GLOBALS.properties.linkedListRectNextOptions.positionX) + GLOBALS.properties.linkedListRectNextOptions.intervalX;
+                        return (i * moduleScope.properties.linkedListRectNextOptions.positionX) + moduleScope.properties.linkedListRectNextOptions.intervalX;
                     })
-                    .attr("y", GLOBALS.properties.linkedListRectNextOptions.positionY)
+                    .attr("y", moduleScope.properties.linkedListRectNextOptions.positionY)
                     .attr("rx", 6)
                     .attr("ry", 6)
                     .attr("class", function (d, i) {
@@ -302,10 +416,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     })
                     .attr("linkID", "next")
                     .attr("rectNextIndex", function (d, i) {
-                        return GLOBALS.variables.linkedListData[i + 1];
+                        return moduleScope.variables.linkedListData[i + 1];
                     })
                     .attr("colorIndex", function (d, i) {
-                        return GLOBALS.variables.linkedListData[i + 1];
+                        return moduleScope.variables.linkedListData[i + 1];
                     })
                     .style("stroke", "black")
                     .style("stroke-width", 0.5)
@@ -314,27 +428,27 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                         return colors.getColor(colorIndex);
                     });
 
-            GLOBALS.variables.linkedListRectNextGroup.append("text")
+            moduleScope.variables.linkedListRectNextGroup.append("text")
                     .text(function (d, i) {
-                        return "NEXT";
+                        return moduleScope.properties.linkedListRectNextOptions.text;
                     })
                     .attr("class", function (d, i) {
                         return "rectNextText" + i + " linkedListGroup";
                     })
                     .attr("text-anchor", "middle")
                     .attr("x", function (d, i) {
-                        return (i * GLOBALS.properties.linkedListRectNextOptions.groupTextPositionX) + GLOBALS.properties.linkedListRectNextOptions.textIntervalX;
+                        return (i * moduleScope.properties.linkedListRectNextOptions.groupTextPositionX) + moduleScope.properties.linkedListRectNextOptions.textIntervalX;
                     })
-                    .attr("y", GLOBALS.properties.linkedListRectNextOptions.groupTextPositionY - 15)
+                    .attr("y", moduleScope.properties.linkedListRectNextOptions.groupTextPositionY - 15)
                     .attr("font-family", "sans-serif")
-                    .attr("font-size", GLOBALS.properties.linkedListRectNextOptions.fontSize)
+                    .attr("font-size", moduleScope.properties.linkedListRectNextOptions.fontSize)
                     .attr("colorIndex", "white")
                     .attr("fill", "white");
 
-            GLOBALS.variables.linkedListRectNextGroup.append("text")
+            moduleScope.variables.linkedListRectNextGroup.append("text")
                     .text(function (d, i) {
-                        var nextData = GLOBALS.variables.linkedListData[i + 1];
-                        if (GLOBALS.variables.linkedListData.length === i + 1) {
+                        var nextData = moduleScope.variables.linkedListData[i + 1];
+                        if (moduleScope.variables.linkedListData.length === i + 1) {
                             nextData = "null";
                         }
                         return nextData;
@@ -344,19 +458,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     })
                     .attr("text-anchor", "middle")
                     .attr("x", function (d, i) {
-                        return (i * GLOBALS.properties.linkedListRectNextOptions.groupTextPositionX) + GLOBALS.properties.linkedListRectNextOptions.textIntervalX;
+                        return (i * moduleScope.properties.linkedListRectNextOptions.groupTextPositionX) + moduleScope.properties.linkedListRectNextOptions.textIntervalX;
                     })
-                    .attr("y", GLOBALS.properties.linkedListRectNextOptions.groupTextPositionY)
+                    .attr("y", moduleScope.properties.linkedListRectNextOptions.groupTextPositionY)
                     .attr("font-family", "sans-serif")
                     .attr("font-size", "13px")
                     .attr("colorIndex", "white")
                     .attr("fill", "white");
         },
         buildRectsGroup: function () {
-            if(GLOBALS.variables.linkedListRectGroup) {GLOBALS.variables.linkedListRectGroup.remove()};
+            if(moduleScope.variables.linkedListRectGroup) {moduleScope.variables.linkedListRectGroup.remove()};
 
-            GLOBALS.variables.linkedListRectGroup = GLOBALS.variables.linkedListSVG.selectAll("g.rectNode")
-                    .data(GLOBALS.variables.linkedListData)
+            moduleScope.variables.linkedListRectGroup = moduleScope.variables.linkedListSVG.selectAll("g.rectNode")
+                    .data(moduleScope.variables.linkedListData)
                     .enter()
                     .append("g")
                     .attr("class", function (d, i) {
@@ -367,12 +481,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     .on("mouseout", function (d, i) {
                     });
 
-            GLOBALS.variables.linkedListRectGroup
+            moduleScope.variables.linkedListRectGroup
                     .append("rect")
                     .attr("x", function (d, i) {
-                        return (i * GLOBALS.properties.linkedListRectOptions.positionX) + GLOBALS.properties.linkedListRectOptions.intervalX;
+                        return (i * moduleScope.properties.linkedListRectOptions.positionX) + moduleScope.properties.linkedListRectOptions.intervalX;
                     })
-                    .attr("y", GLOBALS.properties.linkedListRectOptions.positionY)
+                    .attr("y", moduleScope.properties.linkedListRectOptions.positionY)
                     .attr("class", function (d, i) {
                         return "linkedListRect" + i + " linkedListGroup";
                     })
@@ -380,38 +494,38 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                         return i;
                     })
                     .attr("colorIndex", function (d, i) {
-                        return GLOBALS.variables.linkedListData[i];
+                        return moduleScope.variables.linkedListData[i];
                     })
                     .style("stroke", "black")
                     .style("stroke-width", 0.5)
                     .attr("fill", function (d, i) {
-                        return colors.getColor(GLOBALS.variables.linkedListData[i]);
+                        return colors.getColor(moduleScope.variables.linkedListData[i]);
                     })
-                    .attr("width", GLOBALS.properties.linkedListRectOptions.side)
-                    .attr("height", GLOBALS.properties.linkedListRectOptions.side);
+                    .attr("width", moduleScope.properties.linkedListRectOptions.side)
+                    .attr("height", moduleScope.properties.linkedListRectOptions.side);
 
-            GLOBALS.variables.linkedListRectGroup.append("text")
+            moduleScope.variables.linkedListRectGroup.append("text")
                     .text(function (d, i) {
-                        return GLOBALS.variables.linkedListData[i];
+                        return moduleScope.variables.linkedListData[i];
                     })
                     .attr("class", function (d, i) {
                         return "rectValueText" + i + " linkedListGroup";
                     })
                     .attr("text-anchor", "middle")
                     .attr("x", function (d, i) {
-                        return (i * GLOBALS.properties.linkedListRectOptions.groupTextPositionX) + GLOBALS.properties.linkedListRectOptions.textIntervalX;
+                        return (i * moduleScope.properties.linkedListRectOptions.groupTextPositionX) + moduleScope.properties.linkedListRectOptions.textIntervalX;
                     })
-                    .attr("y", GLOBALS.properties.linkedListRectOptions.groupTextPositionY)
+                    .attr("y", moduleScope.properties.linkedListRectOptions.groupTextPositionY)
                     .attr("font-family", "sans-serif")
                     .attr("font-size", "13px")
                     .attr("colorIndex", "white")
                     .attr("fill", "white");
         },
         buildIndexAxes: function () {
-            if(GLOBALS.variables.linkedListRectIndexAxesGroup) {GLOBALS.variables.linkedListRectIndexAxesGroup.remove()}
+            if(moduleScope.variables.linkedListRectIndexAxesGroup) {moduleScope.variables.linkedListRectIndexAxesGroup.remove()}
 
-            GLOBALS.variables.linkedListRectIndexAxesGroup = GLOBALS.variables.linkedListSVG.selectAll("g.rectNode")
-                    .data(GLOBALS.variables.linkedListData)
+            moduleScope.variables.linkedListRectIndexAxesGroup = moduleScope.variables.linkedListSVG.selectAll("g.rectNode")
+                    .data(moduleScope.variables.linkedListData)
                     .enter()
                     .append("g")
                     .attr("class", function (d, i) {
@@ -422,7 +536,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     .on("mouseout", function (d, i) {
                     });
 
-            GLOBALS.variables.linkedListRectIndexAxesGroup
+            moduleScope.variables.linkedListRectIndexAxesGroup
                     .append("text")
                     .text(function (d, i) {
                         return i;
@@ -432,22 +546,22 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     })
                     .attr("text-anchor", "middle")
                     .attr("x", function (d, i) {
-                        return (i * GLOBALS.properties.linkedListRectIndexAxesGroupOption.groupTextPositionX) + GLOBALS.properties.linkedListRectIndexAxesGroupOption.textIntervalX;
+                        return (i * moduleScope.properties.linkedListRectIndexAxesGroupOption.groupTextPositionX) + moduleScope.properties.linkedListRectIndexAxesGroupOption.textIntervalX;
                     })
-                    .attr("y", GLOBALS.properties.linkedListRectIndexAxesGroupOption.groupIndexTextPositionY)
+                    .attr("y", moduleScope.properties.linkedListRectIndexAxesGroupOption.groupIndexTextPositionY)
                     .attr("font-family", "sans-serif")
                     .attr("font-size", "15px")
                     .style("stroke", "black")
                     .style("stroke-width", 0.1)
                     .attr("colorIndex", function (d, i) {
-                        return GLOBALS.variables.linkedListData[i];
+                        return moduleScope.variables.linkedListData[i];
                     })
                     .attr("fill", function (d, i) {
-                        return colors.getColor(GLOBALS.variables.linkedListData[i]);
+                        return colors.getColor(moduleScope.variables.linkedListData[i]);
                     });
         },
         resetZoomLinkedList: function () {
-            GLOBALS.variables.linkedListSVG.attr("transform", "translate(1)scale(1)");
+            moduleScope.variables.linkedListSVG.attr("transform", "translate(1)scale(1)");
         },
         buildArrow: function (element) {
             if(d3.select(element).attr("class").split(" ")[0] !== "rectNext" && d3.select(element).attr("class").split(" ")[0] !== "rectPrev" ) {
@@ -459,22 +573,22 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 return;
             }
 
-            var sx = Math.floor(d3.select(element).attr("x")) + 20;
+            var sx = Math.floor(d3.select(element).attr("x")) + moduleScope.properties.linkedListRectPrevOptions.changeArrowPosition;
             var sy, tx, ty;
 
             if(d3.select(element).attr("linkID") === "prev") {
-                sy = GLOBALS.properties.linkedListRectPrevOptions.arrowLineSourceY;
-                tx = sx - GLOBALS.properties.linkedListRectPrevOptions.positionX + GLOBALS.properties.linkedListRectPrevOptions.intervalX + GLOBALS.properties.linkedListRectPrevOptions.width;
-                ty = GLOBALS.properties.linkedListRectPrevOptions.arrowLineTargetY;
+                sy = moduleScope.properties.linkedListRectPrevOptions.arrowLineSourceY;
+                tx = sx - moduleScope.properties.linkedListRectPrevOptions.positionX + moduleScope.properties.linkedListRectPrevOptions.intervalX + moduleScope.properties.linkedListRectPrevOptions.width;
+                ty = moduleScope.properties.linkedListRectPrevOptions.arrowLineTargetY;
             }
 
             if(d3.select(element).attr("linkID") === "next") {
-                sy = GLOBALS.properties.linkedListRectNextOptions.arrowLineSourceY;
-                tx =  sx + GLOBALS.properties.linkedListRectNextOptions.positionX - GLOBALS.properties.linkedListRectNextOptions.intervalX + GLOBALS.properties.linkedListRectNextOptions.width;
-                ty = GLOBALS.properties.linkedListRectNextOptions.arrowLineTargetY;
+                sy = moduleScope.properties.linkedListRectNextOptions.arrowLineSourceY;
+                tx =  sx + moduleScope.properties.linkedListRectNextOptions.positionX - moduleScope.properties.linkedListRectNextOptions.intervalX + moduleScope.properties.linkedListRectNextOptions.width;
+                ty = moduleScope.properties.linkedListRectNextOptions.arrowLineTargetY;
             }
 
-            var path = GLOBALS.variables.linkedListSVG.append("path")
+            var path = moduleScope.variables.linkedListSVG.append("path")
                     .data([{
                         source: {x: sx, y: sy},
                         target: {x: tx, y: ty}
@@ -503,7 +617,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 return "M" + (d.source.x + 0) + "," + d.source.y + "A" + dr + "," + dr + " 0 0,1 " + (d.target.x + 0) + "," + d.target.y;
             }
 
-            var arrow = GLOBALS.variables.linkedListSVG.append("path")
+            var arrow = moduleScope.variables.linkedListSVG.append("path")
                     .attr("id", "arrow")
                     .style("stroke", "#707070")
                     .style("fill", function (d, i) {
@@ -544,13 +658,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     .attr("stroke-dashoffset", 0);
         },
         buildArrows: function () {
-            GLOBALS.variables.linkedListRectPrevGroup.selectAll("rect.rectPrev")
+            moduleScope.variables.linkedListRectPrevGroup.selectAll("rect.rectPrev")
                     .each(function (d, i) {
-                        GLOBALS.buildArrow(this);
+                        moduleScope.buildArrow(this);
                     });
-            GLOBALS.variables.linkedListRectNextGroup.selectAll("rect.rectNext")
+            moduleScope.variables.linkedListRectNextGroup.selectAll("rect.rectNext")
                     .each(function (d, i) {
-                        GLOBALS.buildArrow(this);
+                        moduleScope.buildArrow(this);
                     });
         },
         updateLinkedList: function (stepsList) {
@@ -674,83 +788,83 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
             return {
                 addFirstElement: function () {
-                    orderSteps.push(removeArrows(GLOBALS.properties.movingSpeed.initInterval));
-                    orderSteps.push(removeIndexAxes(GLOBALS.properties.movingSpeed.initInterval));
-                    orderSteps.push(zoomLinkedList(GLOBALS.properties.movingSpeed.zoomDuration));
-                    orderSteps.push(moveRectsGroup(GLOBALS.properties.movingSpeed.initInterval));
-                    orderSteps.push(addRectGroup(GLOBALS.properties.movingSpeed.elementsGroup));
-                    orderSteps.push(buildArrows(GLOBALS.properties.movingSpeed.initInterval));
-                    orderSteps.push(updateIndexTextGroup(GLOBALS.properties.movingSpeed.initInterval));
+                    orderSteps.push(removeArrows(moduleScope.properties.movingSpeed.initInterval));
+                    orderSteps.push(removeIndexAxes(moduleScope.properties.movingSpeed.initInterval));
+                    orderSteps.push(zoomLinkedList(moduleScope.properties.movingSpeed.zoomDuration));
+                    orderSteps.push(moveRectsGroup(moduleScope.properties.movingSpeed.initInterval));
+                    orderSteps.push(addRectGroup(moduleScope.properties.movingSpeed.elementsGroup));
+                    orderSteps.push(buildArrows(moduleScope.properties.movingSpeed.initInterval));
+                    orderSteps.push(updateIndexTextGroup(moduleScope.properties.movingSpeed.initInterval));
 
                     return orderSteps;
                 },
                 addLastElement: function () {
-                    orderSteps.push(removeArrows(GLOBALS.properties.movingSpeed.initInterval));
-                    orderSteps.push(removeIndexAxes(GLOBALS.properties.movingSpeed.initInterval));
-                    orderSteps.push(zoomLinkedList(GLOBALS.properties.movingSpeed.zoomDuration));
-                    orderSteps.push(addRectGroup(GLOBALS.properties.movingSpeed.initInterval));
-                    orderSteps.push(buildArrows(GLOBALS.properties.movingSpeed.initInterval));
-                    orderSteps.push(updateIndexTextGroup(GLOBALS.properties.movingSpeed.initInterval));
+                    orderSteps.push(removeArrows(moduleScope.properties.movingSpeed.initInterval));
+                    orderSteps.push(removeIndexAxes(moduleScope.properties.movingSpeed.initInterval));
+                    orderSteps.push(zoomLinkedList(moduleScope.properties.movingSpeed.zoomDuration));
+                    orderSteps.push(addRectGroup(moduleScope.properties.movingSpeed.initInterval));
+                    orderSteps.push(buildArrows(moduleScope.properties.movingSpeed.initInterval));
+                    orderSteps.push(updateIndexTextGroup(moduleScope.properties.movingSpeed.initInterval));
 
                     return orderSteps;
                 },
                 removeFirstElement: function () {
-                    orderSteps.push(removeArrows(GLOBALS.properties.movingSpeed.initInterval));
-                    orderSteps.push(removeIndexAxes(GLOBALS.properties.movingSpeed.initInterval));
-                    orderSteps.push(removeFirstElement(GLOBALS.properties.movingSpeed.removeElementsGroup));
-                    orderSteps.push(moveLeftRectsGroup(GLOBALS.properties.movingSpeed.initInterval));
-                    orderSteps.push(zoomLinkedList(GLOBALS.properties.movingSpeed.zoomDuration));
+                    orderSteps.push(removeArrows(moduleScope.properties.movingSpeed.initInterval));
+                    orderSteps.push(removeIndexAxes(moduleScope.properties.movingSpeed.initInterval));
+                    orderSteps.push(removeFirstElement(moduleScope.properties.movingSpeed.removeElementsGroup));
+                    orderSteps.push(moveLeftRectsGroup(moduleScope.properties.movingSpeed.initInterval));
+                    orderSteps.push(zoomLinkedList(moduleScope.properties.movingSpeed.zoomDuration));
 
-                    orderSteps.push(addRectGroup(GLOBALS.properties.movingSpeed.initInterval));
-                    orderSteps.push(buildArrows(GLOBALS.properties.movingSpeed.initInterval));
-                    orderSteps.push(updateIndexTextGroup(GLOBALS.properties.movingSpeed.initInterval));
+                    orderSteps.push(addRectGroup(moduleScope.properties.movingSpeed.initInterval));
+                    orderSteps.push(buildArrows(moduleScope.properties.movingSpeed.initInterval));
+                    orderSteps.push(updateIndexTextGroup(moduleScope.properties.movingSpeed.initInterval));
 
                     return orderSteps;
                 },
                 removeLastElement: function () {
-                    orderSteps.push(removeArrows(GLOBALS.properties.movingSpeed.initInterval));
-                    orderSteps.push(removeIndexAxes(GLOBALS.properties.movingSpeed.initInterval));
-                    orderSteps.push(removeLastElement(GLOBALS.properties.movingSpeed.removeElementsGroup));
-                    orderSteps.push(addRectGroup(GLOBALS.properties.movingSpeed.initInterval));
-                    orderSteps.push(zoomLinkedList(GLOBALS.properties.movingSpeed.zoomDuration));
-                    orderSteps.push(buildArrows(GLOBALS.properties.movingSpeed.initInterval));
-                    orderSteps.push(updateIndexTextGroup(GLOBALS.properties.movingSpeed.initInterval));
+                    orderSteps.push(removeArrows(moduleScope.properties.movingSpeed.initInterval));
+                    orderSteps.push(removeIndexAxes(moduleScope.properties.movingSpeed.initInterval));
+                    orderSteps.push(removeLastElement(moduleScope.properties.movingSpeed.removeElementsGroup));
+                    orderSteps.push(addRectGroup(moduleScope.properties.movingSpeed.initInterval));
+                    orderSteps.push(zoomLinkedList(moduleScope.properties.movingSpeed.zoomDuration));
+                    orderSteps.push(buildArrows(moduleScope.properties.movingSpeed.initInterval));
+                    orderSteps.push(updateIndexTextGroup(moduleScope.properties.movingSpeed.initInterval));
 
                     return orderSteps;
                 },
                 searchIndex: function () {
-                    orderSteps.push(moveBackSearchElement(GLOBALS.properties.movingSpeed.searchIndex));
-                    orderSteps.push(moveSearchElement(GLOBALS.properties.movingSpeed.searchIndex));
-                    orderSteps.push(moveIndex(GLOBALS.properties.movingSpeed.searchIndex));
-                    orderSteps.push(buildEqualSign(GLOBALS.properties.movingSpeed.searchIndex));
-                    orderSteps.push(validateElement(GLOBALS.properties.movingSpeed.searchIndex));
+                    orderSteps.push(moveBackSearchElement(moduleScope.properties.movingSpeed.searchIndex));
+                    orderSteps.push(moveSearchElement(moduleScope.properties.movingSpeed.searchIndex));
+                    orderSteps.push(moveIndex(moduleScope.properties.movingSpeed.searchIndex));
+                    orderSteps.push(buildEqualSign(moduleScope.properties.movingSpeed.searchIndex));
+                    orderSteps.push(validateElement(moduleScope.properties.movingSpeed.searchIndex));
 
                     return orderSteps;
                 },
                 searchValue: function () {
-                    orderSteps.push(moveValue(GLOBALS.properties.movingSpeed.searchValue));
-                    orderSteps.push(moveBackSearchElement(GLOBALS.properties.movingSpeed.searchValue));
-                    orderSteps.push(moveSearchElement(GLOBALS.properties.movingSpeed.searchValue));
-                    orderSteps.push(buildEqualSign(GLOBALS.properties.movingSpeed.searchValue));
-                    orderSteps.push(validateElement(GLOBALS.properties.movingSpeed.searchValue));
+                    orderSteps.push(moveValue(moduleScope.properties.movingSpeed.searchValue));
+                    orderSteps.push(moveBackSearchElement(moduleScope.properties.movingSpeed.searchValue));
+                    orderSteps.push(moveSearchElement(moduleScope.properties.movingSpeed.searchValue));
+                    orderSteps.push(buildEqualSign(moduleScope.properties.movingSpeed.searchValue));
+                    orderSteps.push(validateElement(moduleScope.properties.movingSpeed.searchValue));
 
                     return orderSteps;
                 }
             }
         },
         stepsHandler: function () {
-            var moveElement = GLOBALS.moveElement();
+            var moveElement = moduleScope.moveElement();
 
             return {
                 removeArrows: function () {
-                    GLOBALS.variables.linkedListSVG.selectAll(".linkedListLine").remove();
-                    GLOBALS.variables.linkedListSVG.selectAll("#arrow").remove();
+                    moduleScope.variables.linkedListSVG.selectAll(".linkedListLine").remove();
+                    moduleScope.variables.linkedListSVG.selectAll("#arrow").remove();
                 },
                 removeIndexAxes: function () {
-                    GLOBALS.variables.linkedListRectIndexAxesGroup.remove()
+                    moduleScope.variables.linkedListRectIndexAxesGroup.remove()
                 },
                 moveRectsGroup: function (id) {
-                    var rectsGroup = GLOBALS.variables.linkedListSVG.selectAll(".linkedListGroup");
+                    var rectsGroup = moduleScope.variables.linkedListSVG.selectAll(".linkedListGroup");
                     rectsGroup.transition()
                             .each("end", function () {
                                 var movingElement =  d3.select(this);
@@ -758,7 +872,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                             });
                 },
                 moveLeftRectsGroup: function (id) {
-                    var rectsGroup = GLOBALS.variables.linkedListSVG.selectAll(".linkedListGroup");
+                    var rectsGroup = moduleScope.variables.linkedListSVG.selectAll(".linkedListGroup");
                     rectsGroup.transition()
                             .each("end", function () {
                                 var movingElement =  d3.select(this);
@@ -766,38 +880,38 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                             });
                 },
                 addRectGroup: function () {
-                    GLOBALS.buildRectsPrevGroup();
-                    GLOBALS.buildRectsNextGroup();
-                    GLOBALS.buildRectsGroup();
+                    moduleScope.buildRectsPrevGroup();
+                    moduleScope.buildRectsNextGroup();
+                    moduleScope.buildRectsGroup();
                 },
                 buildArrows: function () {
-                    GLOBALS.buildArrows();
+                    moduleScope.buildArrows();
                 },
                 updateIndexTextGroup: function () {
-                    GLOBALS.buildIndexAxes();
+                    moduleScope.buildIndexAxes();
                 },
                 moveIndex: function (cx, cy, i, searchIndex, item, cb) {
-                    var moveElement = GLOBALS.moveElement();
+                    var moveElement = moduleScope.moveElement();
 
                     return moveElement["moveIndex"](cx, cy, i, searchIndex, item, cb);
                 },
                 moveValue: function (cx, cy, i, searchIndex, item, cb) {
-                    var moveElement = GLOBALS.moveElement();
+                    var moveElement = moduleScope.moveElement();
 
                     return moveElement["moveValue"](cx, cy, i, searchIndex, item, cb);
                 },
                 moveSearchElement: function (cx, cy, i, searchIndex, item, cb) {
-                    var moveElement = GLOBALS.moveElement();
+                    var moveElement = moduleScope.moveElement();
 
                     return moveElement["moveSearchElement"](cx, cy, i, searchIndex, item, cb);
                 },
                 moveBackSearchElement: function (cx, cy, i, searchIndex, item, cb) {
-                    var moveElement = GLOBALS.moveElement();
+                    var moveElement = moduleScope.moveElement();
 
                     return moveElement["moveBackSearchElement"](cx, cy, i, searchIndex, item, cb);
                 },
                 buildEqualSign: function (cx, cy, i, searchIndex, item, cb) {
-                    var pathTop = GLOBALS.variables.linkedListSVG.append("path")
+                    var pathTop = moduleScope.variables.linkedListSVG.append("path")
                             .data([{
                                 source: {x: cx + 8, y: cy - 3},
                                 target: {x: cx + 18, y: cy - 3}
@@ -805,7 +919,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                             .attr("id", "pathTop" + i)
                             .attr("class", "pathTop line")
                             .style("stroke", function () {
-                                return colors.getColor(GLOBALS.variables.linkedListData[i]);
+                                return colors.getColor(moduleScope.variables.linkedListData[i]);
                             })
                             .style("stroke-width", 0.5)
                             .attr("d", function (d) {
@@ -814,7 +928,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                                         dr = 0;
                                 return "M" + (d.source.x + 0) + "," + d.source.y + "A" + dr + "," + dr + " 0 0,1 " + (d.target.x + 0) + "," + d.target.y;
                             });
-                    var pathBottom = GLOBALS.variables.linkedListSVG.append("path")
+                    var pathBottom = moduleScope.variables.linkedListSVG.append("path")
                             .data([{
                                 source: {x: cx + 8, y: cy + 3},
                                 target: {x: cx + 18, y: cy + 3}
@@ -822,7 +936,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                             .attr("id", "pathBottom" + i)
                             .attr("class", "pathBottom line")
                             .style("stroke", function () {
-                                return colors.getColor(GLOBALS.variables.linkedListData[i]);
+                                return colors.getColor(moduleScope.variables.linkedListData[i]);
                             })
                             .style("stroke-width", 0.5)
                             .attr("d", function (d) {
@@ -835,7 +949,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     return cb();
                 },
                 buildNotEqualSign: function (cx, cy, i) {
-                    var pathNotEqual = GLOBALS.variables.linkedListSVG.append("path")
+                    var pathNotEqual = moduleScope.variables.linkedListSVG.append("path")
                             .data([
                                 {
                                     source: {x: cx + 7, y: cy + 9},
@@ -854,7 +968,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                             });
                 },
                 validateElement: function (cx, cy, i, searchIndex, item, cb, callback, id) {
-                    var elementsHandler = GLOBALS.elementsHandler();
+                    var elementsHandler = moduleScope.elementsHandler();
 
                     return elementsHandler["validateElement"](cx, cy, i, searchIndex, item, cb, callback, id)
                 },
@@ -864,22 +978,22 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     d3.selectAll(".linkedListRectNode0").remove();
                 },
                 removeLastElement: function (id) {
-                    GLOBALS.variables.linkedListSVG.selectAll(".rectPrevNode" + id).remove();
-                    GLOBALS.variables.linkedListSVG.selectAll(".rectNextNode" + id).remove();
-                    GLOBALS.variables.linkedListSVG.selectAll(".rectNode" + id).remove();
+                    moduleScope.variables.linkedListSVG.selectAll(".rectPrevNode" + id).remove();
+                    moduleScope.variables.linkedListSVG.selectAll(".rectNextNode" + id).remove();
+                    moduleScope.variables.linkedListSVG.selectAll(".rectNode" + id).remove();
                 },
                 zoomLinkedList: function () {
-                    if(GLOBALS.variables.linkedListData.length < GLOBALS.properties.svgOptions.minElements) {return;}
+                    if(moduleScope.variables.linkedListData.length < moduleScope.properties.svgOptions.minElements) {return;}
 
                     var zoom = d3.behavior.zoom()
                             .on("zoom", zoomed);
 
                     function zoomed() {
-                        GLOBALS.variables.linkedListSVG.transition()
-                                .attr("transform", "translate(" + d3.event.translate + ")scale("+ (d3.event.scale * (GLOBALS.properties.svgOptions.initialArrayLength / GLOBALS.variables.linkedListData.length)) +")");
+                        moduleScope.variables.linkedListSVG.transition()
+                                .attr("transform", "translate(" + d3.event.translate + ")scale("+ (d3.event.scale * (moduleScope.properties.svgOptions.initialArrayLength / moduleScope.variables.linkedListData.length)) +")");
                     }
 
-                    GLOBALS.variables.linkedListSVG.transition()
+                    moduleScope.variables.linkedListSVG.transition()
                             .call(zoom.event);
                 }
             }
@@ -887,50 +1001,50 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         elementsHandler: function () {
             return {
                 validateElement: function (cx, cy, i, validateElement, item, cb, callback, id) {
-                    var elementColorID = GLOBALS.variables.linkedListData[i];
+                    var elementColorID = moduleScope.variables.linkedListData[i];
 
                     if (item !== validateElement) {
-                        GLOBALS.variables.linkedListSVG.select("#pathTop" + i)
+                        moduleScope.variables.linkedListSVG.select("#pathTop" + i)
                                 .style("stroke", "red");
-                        GLOBALS.variables.linkedListSVG.select("#pathBottom" + i)
+                        moduleScope.variables.linkedListSVG.select("#pathBottom" + i)
                                 .style("stroke", "red");
 
-                        var stepsHandler = GLOBALS.stepsHandler();
+                        var stepsHandler = moduleScope.stepsHandler();
                             stepsHandler.buildNotEqualSign(cx, cy, i);
 
                         callback();
 
                         this.isNotFound(i, validateElement, id);
                     } else {
-                        GLOBALS.variables.linkedListSVG.select("#pathTop" + i)
+                        moduleScope.variables.linkedListSVG.select("#pathTop" + i)
                                 .style("stroke", function () {
                                     return colors.getColor(elementColorID);
                                 });
-                        GLOBALS.variables.linkedListSVG.select("#pathBottom" + i)
+                        moduleScope.variables.linkedListSVG.select("#pathBottom" + i)
                                 .style("stroke", function () {
                                     return colors.getColor(elementColorID);
                                 })
                                 .transition().delay(300)
                                 .each("end", function () {
-                                    GLOBALS.variables.linkedListSVG.select("#searchElement")
+                                    moduleScope.variables.linkedListSVG.select("#searchElement")
                                             .style("fill", function () {
                                                 return colors.getColor(elementColorID);
                                             });
-                                    GLOBALS.zoomElementHandler(i);
+                                    moduleScope.zoomElementHandler(i);
                                 })
-                                .transition().delay(GLOBALS.properties.circleOptions.initDuration * 2.5)
+                                .transition().delay(moduleScope.properties.circleOptions.initDuration * 2.5)
                                 .each("end", function () {
-                                    var elementsHandler = GLOBALS.elementsHandler();
+                                    var elementsHandler = moduleScope.elementsHandler();
                                         elementsHandler.resetElement(i);
                                 });
                     }
                 },
                 searchIndex: function (cx, cy, i, serchingValue, callback, stepsList) {
-                    var searchIndex = Math.floor(GLOBALS.variables.linkedListSVG.select("#rectSearchText").text());
+                    var searchIndex = Math.floor(moduleScope.variables.linkedListSVG.select("#rectSearchText").text());
                     cy += 150;
 
-                    var orderSteps = GLOBALS.orderSteps();
-                    var steps = GLOBALS.stepsHandler();
+                    var orderSteps = moduleScope.orderSteps();
+                    var steps = moduleScope.stepsHandler();
                     var stepsCollection = orderSteps[stepsList]();
 
                     stepsCollection.reduce(function(promiseChain, item) {
@@ -948,9 +1062,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     };
                 },
                 searchValue: function (cx, cy, i, serchingValue, callback, stepsList) {
-                    var searchValue = Math.floor(GLOBALS.variables.linkedListSVG.select("#rectSearchText").text());
-                    var orderSteps = GLOBALS.orderSteps();
-                    var steps = GLOBALS.stepsHandler();
+                    var searchValue = Math.floor(moduleScope.variables.linkedListSVG.select("#rectSearchText").text());
+                    var orderSteps = moduleScope.orderSteps();
+                    var steps = moduleScope.stepsHandler();
                     var stepsCollection = orderSteps[stepsList]();
 
                     stepsCollection.reduce(function(promiseChain, item) {
@@ -968,44 +1082,44 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     };
                 },
                 isNotFound: function (i, validateElement, id) {
-                    if(GLOBALS.variables.linkedListData.length - 1 == i) {
-                        var elementsHandler = GLOBALS.elementsHandler();
+                    if(moduleScope.variables.linkedListData.length - 1 == i) {
+                        var elementsHandler = moduleScope.elementsHandler();
                             elementsHandler.resetElement(i);
 //                        $("#" + id + "Data").notify(validateElement + " not found", { position:"right" }); //todo: create Material Design notify
                     }
                 },
                 resetElement: function (i) {
-                    GLOBALS.variables.linkedListSVG.select(".rectValueText" + i)
-                            .attr("y", GLOBALS.properties.linkedListRectOptions.groupTextPositionY)
+                    moduleScope.variables.linkedListSVG.select(".rectValueText" + i)
+                            .attr("y", moduleScope.properties.linkedListRectOptions.groupTextPositionY)
                             .attr("fill", "white");
-                    GLOBALS.variables.linkedListSVG.select(".rectIndexText" + i)
-                            .attr("y", GLOBALS.properties.linkedListRectIndexAxesGroupOption.groupIndexTextPositionY);
-                    GLOBALS.variables.linkedListSVG.select("#searchElement").remove();
-                    GLOBALS.variables.linkedListSVG.select("#rectSearchText").remove();
-                    GLOBALS.variables.linkedListSVG.select("#pathTop" + i).remove();
-                    GLOBALS.variables.linkedListSVG.select("#pathBottom" + i).remove();
-                    GLOBALS.variables.linkedListSVG.select("#pathNotEqual" + i).remove();
+                    moduleScope.variables.linkedListSVG.select(".rectIndexText" + i)
+                            .attr("y", moduleScope.properties.linkedListRectIndexAxesGroupOption.groupIndexTextPositionY);
+                    moduleScope.variables.linkedListSVG.select("#searchElement").remove();
+                    moduleScope.variables.linkedListSVG.select("#rectSearchText").remove();
+                    moduleScope.variables.linkedListSVG.select("#pathTop" + i).remove();
+                    moduleScope.variables.linkedListSVG.select("#pathBottom" + i).remove();
+                    moduleScope.variables.linkedListSVG.select("#pathNotEqual" + i).remove();
                 },
                 zoomLinkedList: function () {
-                    GLOBALS.variables.linkedListSVG.attr("transform", "translate(" + d3.event.translate + ")scale("+ d3.event.scale +")");
+                    moduleScope.variables.linkedListSVG.attr("transform", "translate(" + d3.event.translate + ")scale("+ d3.event.scale +")");
                 }
             }
         },
         moveElement: function () {
             return {
                 addFirstElement: function (movingElement) {
-                    movingElement.transition().duration(GLOBALS.properties.movingSpeed.elementsGroup)
+                    movingElement.transition().duration(moduleScope.properties.movingSpeed.elementsGroup)
                             .attr("x", function (d, i) {
-                                return Math.floor(d3.select(this).attr("x")) + GLOBALS.properties.linkedListRectOptions.positionX;
+                                return Math.floor(d3.select(this).attr("x")) + moduleScope.properties.linkedListRectOptions.positionX;
                             })
                             .attr("fill", function () {
                                 return colors.getColor(d3.select(this).attr("colorIndex"));
                             });
                 },
                 removeFirstElement: function (movingElement) {
-                    movingElement.transition().duration(GLOBALS.properties.movingSpeed.elementsGroup)
+                    movingElement.transition().duration(moduleScope.properties.movingSpeed.elementsGroup)
                             .attr("x", function (d, i) {
-                                return Math.floor(d3.select(this).attr("x")) - GLOBALS.properties.linkedListRectOptions.positionX;
+                                return Math.floor(d3.select(this).attr("x")) - moduleScope.properties.linkedListRectOptions.positionX;
                             })
                             .attr("fill", function () {
                                 return colors.getColor(d3.select(this).attr("colorIndex"));
@@ -1014,49 +1128,49 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 addLast: function () {return;},
                 moveIndexTextGroup: function (movingElement) {
                     movingElement.attr("y", function (d, i) {
-                        return Math.floor(d3.select(this).attr("y")) + GLOBALS.properties.linkedListRectIndexAxesGroupOption.movingToPositionY;
+                        return Math.floor(d3.select(this).attr("y")) + moduleScope.properties.linkedListRectIndexAxesGroupOption.movingToPositionY;
                     })
                             .attr("fill", function () {
                                 return colors.getColor(d3.select(this).attr("colorIndex"));
                             });
                 },
                 moveSearchElement: function (cx, cy, i, searchIndex, item, cb) {
-                    GLOBALS.variables.linkedListSVG.select("#searchElement").transition().duration(GLOBALS.properties.movingSpeed.searchValue)
+                    moduleScope.variables.linkedListSVG.select("#searchElement").transition().duration(moduleScope.properties.movingSpeed.searchValue)
                             .attr("cx", cx - 10)
                             .attr("cy", cy)
-                    GLOBALS.variables.linkedListSVG.select("#rectSearchText").transition().duration(GLOBALS.properties.movingSpeed.searchValue)
+                    moduleScope.variables.linkedListSVG.select("#rectSearchText").transition().duration(moduleScope.properties.movingSpeed.searchValue)
                             .attr("x", cx - 10)
                             .attr("y", cy + 4);
 
                     return cb();
                 },
                 moveBackSearchElement: function (cx, cy, i, searchIndex, item, cb) {
-                    GLOBALS.variables.linkedListSVG.select("#pathTop" + (i - 1)).remove();
-                    GLOBALS.variables.linkedListSVG.select("#pathBottom" + (i - 1)).remove();
-                    GLOBALS.variables.linkedListSVG.select("#pathNotEqual" + (i - 1)).remove();
-                    GLOBALS.variables.linkedListSVG.select(".rectIndexText" + (i - 1))
-                            .attr("y", GLOBALS.properties.linkedListRectIndexAxesGroupOption.groupIndexTextPositionY);
-                    GLOBALS.variables.linkedListSVG.select(".rectValueText" + (i - 1))
-                            .attr("y", GLOBALS.properties.linkedListRectOptions.groupTextPositionY)
+                    moduleScope.variables.linkedListSVG.select("#pathTop" + (i - 1)).remove();
+                    moduleScope.variables.linkedListSVG.select("#pathBottom" + (i - 1)).remove();
+                    moduleScope.variables.linkedListSVG.select("#pathNotEqual" + (i - 1)).remove();
+                    moduleScope.variables.linkedListSVG.select(".rectIndexText" + (i - 1))
+                            .attr("y", moduleScope.properties.linkedListRectIndexAxesGroupOption.groupIndexTextPositionY);
+                    moduleScope.variables.linkedListSVG.select(".rectValueText" + (i - 1))
+                            .attr("y", moduleScope.properties.linkedListRectOptions.groupTextPositionY)
                             .attr("fill", "white");
 
                     return cb();
                 },
                 moveIndex: function (cx, cy, i, searchIndex, item, cb) {
-                    var rectIndexText = GLOBALS.variables.linkedListSVG.select(".rectIndexText" + i);
+                    var rectIndexText = moduleScope.variables.linkedListSVG.select(".rectIndexText" + i);
 
-                    rectIndexText.transition().duration(GLOBALS.properties.movingSpeed.searchIndex)
-                            .attr("y", GLOBALS.properties.linkedListRectIndexAxesGroupOption.movingToPositionY);
+                    rectIndexText.transition().duration(moduleScope.properties.movingSpeed.searchIndex)
+                            .attr("y", moduleScope.properties.linkedListRectIndexAxesGroupOption.movingToPositionY);
 
                     return cb();
                 },
                 moveValue: function (cx, cy, i, searchIndex, item, cb) {
-                    var rectValueText = GLOBALS.variables.linkedListSVG.select(".rectValueText" + i);
+                    var rectValueText = moduleScope.variables.linkedListSVG.select(".rectValueText" + i);
 
-                    rectValueText.transition().duration(GLOBALS.properties.movingSpeed.searchValue)
-                            .attr("y", GLOBALS.properties.linkedListRectOptions.movingToPositionY)
+                    rectValueText.transition().duration(moduleScope.properties.movingSpeed.searchValue)
+                            .attr("y", moduleScope.properties.linkedListRectOptions.movingToPositionY)
                             .attr("fill", function (d) {
-                                return colors.getColor(GLOBALS.variables.linkedListData[i]);
+                                return colors.getColor(moduleScope.variables.linkedListData[i]);
                             });
 
                     return cb();
@@ -1064,24 +1178,24 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             }
         },
         addSearchElement: function (data, id) {
-            var searchElementOptions = GLOBALS.searchElementOptions();
+            var searchElementOptions = moduleScope.searchElementOptions();
 
-            if(GLOBALS.variables.linkedListSVG.select("#searchElement")) {GLOBALS.variables.linkedListSVG.select("#searchElement").remove()}
+            if(moduleScope.variables.linkedListSVG.select("#searchElement")) {moduleScope.variables.linkedListSVG.select("#searchElement").remove()}
 
-            var circle = GLOBALS.variables.linkedListSVG.append("circle")
+            var circle = moduleScope.variables.linkedListSVG.append("circle")
                     .attr("id", "searchElement")
-                    .attr("cx", searchElementOptions[id].cx)
-                    .attr("cy", searchElementOptions[id].cy)
+                    .attr("cx", searchElementOptions[id]().cx)
+                    .attr("cy", searchElementOptions[id]().cy)
                     .attr("fill", "red")
                     .attr("r", 13 + "px");
 
-            if(GLOBALS.variables.linkedListSVG.select("#rectSearchText")) {
-                GLOBALS.variables.linkedListSVG.select("#rectSearchText").remove();
-                GLOBALS.variables.linkedListSVG.select(".pathBottom").remove();
-                GLOBALS.variables.linkedListSVG.select(".pathTop").remove();
+            if(moduleScope.variables.linkedListSVG.select("#rectSearchText")) {
+                moduleScope.variables.linkedListSVG.select("#rectSearchText").remove();
+                moduleScope.variables.linkedListSVG.select(".pathBottom").remove();
+                moduleScope.variables.linkedListSVG.select(".pathTop").remove();
             }
 
-            GLOBALS.variables.linkedListSVG.append("text")
+            moduleScope.variables.linkedListSVG.append("text")
                     .text(data)
                     .attr("id", "rectSearchText")
                     .attr("class", function (d, i) {
@@ -1103,7 +1217,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             //     console.log(element);
 
             var elementsHandler = this.elementsHandler();
-            GLOBALS.variables.linkedListData.reduce(function(promiseChain, item, i) {
+            moduleScope.variables.linkedListData.reduce(function(promiseChain, item, i) {
                 return promiseChain.then(function() {
                     return new Promise(function(resolve) {
                         if(asyncFunction(item, resolve, i, element));
@@ -1112,11 +1226,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
             function asyncFunction(item, cb, i, element) {
                 setTimeout(function() {
-                    var cx = Math.floor(GLOBALS.variables.linkedListSVG.select(".linkedListRect" + i).attr("x")) - 3;
-                    var cy = Math.floor(GLOBALS.variables.linkedListSVG.select(".linkedListRect" + i).attr("y")) - 34;
+                    var cx = Math.floor(moduleScope.variables.linkedListSVG.select(".linkedListRect" + i).attr("x")) - 3;
+                    var cy = Math.floor(moduleScope.variables.linkedListSVG.select(".linkedListRect" + i).attr("y")) - 34;
 
                     elementsHandler[element](cx, cy, i, item, cb, element);
-                }, GLOBALS.properties.movingSpeed.searchIndex);
+                }, moduleScope.properties.movingSpeed.searchIndex);
             }
         },
         searchElementOptions: function () {
@@ -1135,44 +1249,44 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             var currentW;
             var currentH;
             var destinationX;
-            var zoomElement = GLOBALS.variables.linkedListSVG.select(".rectPrev" + i);
+            var zoomElement = moduleScope.variables.linkedListSVG.select(".rectPrev" + i);
             zoomRects(zoomElement);
 
-            zoomElement = GLOBALS.variables.linkedListSVG.select(".rectNext" + i);
+            zoomElement = moduleScope.variables.linkedListSVG.select(".rectNext" + i);
             zoomRects(zoomElement);
 
-            zoomElement = GLOBALS.variables.linkedListSVG.select(".linkedListRect" + i);
+            zoomElement = moduleScope.variables.linkedListSVG.select(".linkedListRect" + i);
             zoomRects(zoomElement);
 
-            zoomElement = GLOBALS.variables.linkedListSVG.selectAll(".rectPrevText" + i);
-            destinationX = Math.floor(zoomElement.attr("x")) - GLOBALS.properties.linkedListRectOptions.scaleFactor / 2;
+            zoomElement = moduleScope.variables.linkedListSVG.selectAll(".rectPrevText" + i);
+            destinationX = Math.floor(zoomElement.attr("x")) - moduleScope.properties.linkedListRectOptions.scaleFactor / 2;
             zoomRectsText(zoomElement, destinationX);
 
-            zoomElement = GLOBALS.variables.linkedListSVG.selectAll(".rectNextText" + i);
-            destinationX = Math.floor(zoomElement.attr("x")) + GLOBALS.properties.linkedListRectOptions.scaleFactor / 2;
+            zoomElement = moduleScope.variables.linkedListSVG.selectAll(".rectNextText" + i);
+            destinationX = Math.floor(zoomElement.attr("x")) + moduleScope.properties.linkedListRectOptions.scaleFactor / 2;
             zoomRectsText(zoomElement, destinationX);
 
             function zoomRects(element) {
                 element.transition()
-                        .duration(GLOBALS.properties.linkedListRectOptions.zoomDuration)
+                        .duration(moduleScope.properties.linkedListRectOptions.zoomDuration)
                         .attr("x", function (d) {
                             currentX = Math.floor(d3.select(this).attr("x"));
-                            return Math.floor(d3.select(this).attr("x")) - GLOBALS.properties.linkedListRectOptions.scaleFactor / 2;
+                            return Math.floor(d3.select(this).attr("x")) - moduleScope.properties.linkedListRectOptions.scaleFactor / 2;
                         })
                         .attr("y", function (d) {
                             currentY = Math.floor(d3.select(this).attr("y"));
-                            return Math.floor(d3.select(this).attr("y")) - GLOBALS.properties.linkedListRectOptions.scaleFactor / 2;
+                            return Math.floor(d3.select(this).attr("y")) - moduleScope.properties.linkedListRectOptions.scaleFactor / 2;
                         })
                         .attr("width", function (d) {
                             currentW = Math.floor(d3.select(this).attr("width"));
-                            return Math.floor(d3.select(this).attr("width")) + GLOBALS.properties.linkedListRectOptions.scaleFactor;
+                            return Math.floor(d3.select(this).attr("width")) + moduleScope.properties.linkedListRectOptions.scaleFactor;
                         })
                         .attr("height", function (d) {
                             currentH = Math.floor(d3.select(this).attr("height"));
-                            return Math.floor(d3.select(this).attr("height")) + GLOBALS.properties.linkedListRectOptions.scaleFactor;
+                            return Math.floor(d3.select(this).attr("height")) + moduleScope.properties.linkedListRectOptions.scaleFactor;
                         })
                         .transition()
-                        .duration(GLOBALS.properties.linkedListRectOptions.zoomDuration)
+                        .duration(moduleScope.properties.linkedListRectOptions.zoomDuration)
                         .attr("x", currentX)
                         .attr("y", currentY)
                         .attr("width", currentW)
@@ -1181,20 +1295,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             function zoomRectsText(element, destinationX) {
                 currentX = Math.floor(element.attr("x"));
                 element.transition()
-                        .duration(GLOBALS.properties.linkedListRectOptions.zoomDuration)
+                        .duration(moduleScope.properties.linkedListRectOptions.zoomDuration)
                         .attr("x", destinationX)
                         .transition()
-                        .duration(GLOBALS.properties.linkedListRectOptions.zoomDuration)
+                        .duration(moduleScope.properties.linkedListRectOptions.zoomDuration)
                         .attr("x", currentX);
             }
         },
         resize: function () {
-            var elementWidth = GLOBALS.properties.linkedListRectPrevOptions.width + GLOBALS.properties.linkedListRectOptions.side + GLOBALS.properties.linkedListRectNextOptions.width;
-            var elementInterval = (GLOBALS.properties.linkedListRectOptions.positionX / 2);
-            var linkedListWidth = (elementWidth + elementInterval) * GLOBALS.variables.linkedListData.length;
+            var elementWidth = moduleScope.properties.linkedListRectPrevOptions.width + moduleScope.properties.linkedListRectOptions.side + moduleScope.properties.linkedListRectNextOptions.width;
+            var elementInterval = (moduleScope.properties.linkedListRectOptions.positionX / 2);
+            var linkedListWidth = (elementWidth + elementInterval) * moduleScope.variables.linkedListData.length;
             var linkedListScaleFactor = window.innerWidth < linkedListWidth ? window.innerWidth / linkedListWidth : 1;
 
-            GLOBALS.variables.linkedListSVG.attr("transform", "translate(1)scale(" + linkedListScaleFactor + ")");
+            moduleScope.variables.linkedListSVG.attr("transform", "translate(1)scale(" + linkedListScaleFactor + ")");
         },
         listeners: {
             'linkedListZoomToggleSwitch.tap': 'linkedListZoomToggleHandler',
@@ -1214,32 +1328,35 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             }
 
             function linkedListEnableZoomFeature() {
-                GLOBALS.variables.linkedListSVG.call(d3.behavior.zoom()
+                moduleScope.variables.linkedListSVG.call(d3.behavior.zoom()
                         .scaleExtent([0.1, 3])
                         .on("zoom", zoom));
 
                 function zoom() {
-                    GLOBALS.variables.linkedListSVG.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+                    moduleScope.variables.linkedListSVG.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
                 }
             };
             function linkedListDisableZoomFeature() {
-                GLOBALS.variables.linkedListSVG.call(d3.behavior.zoom()
+                moduleScope.variables.linkedListSVG.call(d3.behavior.zoom()
                         .on("zoom", null));
             };
         },
         addFirstElementHandler: function () {
-            var firstValue = Math.floor(this.$.firstElementData.value); //todo: check empty value
+            if(this.$.firstElementData.validate()) {
 
-            GLOBALS.variables.linkedListData.unshift(firstValue);
+                var firstValue = Math.floor(this.$.firstElementData.value);
 
-            this.updateLinkedList("addFirstElement");
+                moduleScope.variables.linkedListData.unshift(firstValue);
 
-            this.$.firstElementData.value = ''; //todo: clear value in input fields?
+                this.updateLinkedList("addFirstElement");
+
+                this.$.firstElementData.value = ''; //todo: clear value in input fields?
+            }
         },
         addLastElementHandler: function () {
             var lastValue = Math.floor(this.$.lastElementData.value); //todo: check empty value
 
-            GLOBALS.variables.linkedListData.push(lastValue);
+            moduleScope.variables.linkedListData.push(lastValue);
 
             this.updateLinkedList("addLastElement");
 
@@ -1248,7 +1365,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         searchIndexHandler: function () {
             var indexData = Math.floor(this.$.searchIndexData.value);
 
-            if(indexData <= GLOBALS.variables.linkedListData.length - 1 && indexData >= 0) {
+            if(indexData <= moduleScope.variables.linkedListData.length - 1 && indexData >= 0) {
                 this.addSearchElement(indexData, "searchIndexPosition");
                 this.searchElement("searchIndex");
             } else {
@@ -1262,21 +1379,22 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             this.searchElement("searchValue");
         },
         removeFirstElementHandler: function () {
-            GLOBALS.variables.linkedListData.shift();
+            moduleScope.variables.linkedListData.shift();
             this.updateLinkedList("removeFirstElement");
         },
         removeLastElementHandler: function () {
-            GLOBALS.variables.linkedListData.pop();
+            moduleScope.variables.linkedListData.pop();
 
             this.updateLinkedList("removeLastElement");
         },
         regenerateLinkedListHandler: function () {
-            GLOBALS.variables.linkedListData.splice(0, GLOBALS.variables.linkedListData.length); //todo: if used linkedListData = [1, 5, 8, 5, 7, 13] there error with instance
-            GLOBALS.variables.linkedListDefaultData.forEach(function (val) {
-                GLOBALS.variables.linkedListData.push(val);
+            moduleScope.variables.linkedListData.splice(0, moduleScope.variables.linkedListData.length); //todo: if used linkedListData = [1, 5, 8, 5, 7, 13] there error with instance
+            moduleScope.variables.linkedListDefaultData.forEach(function (val) {
+                moduleScope.variables.linkedListData.push(val);
             });
-            GLOBALS.variables.linkedListSVG.selectAll("g").remove();
-            GLOBALS.variables.linkedListSVG.selectAll("path").remove();
+            moduleScope.variables.linkedListSVG.selectAll("g").remove();
+            moduleScope.variables.linkedListSVG.selectAll("path").remove();
+            //todo: clear all input elements
 
             this.addLinkedList();
         }
